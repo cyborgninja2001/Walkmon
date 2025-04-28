@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 /*
 erX (32 bits) can be splitted into eX (hi 16 bits) & rX (lo 16 bits)
