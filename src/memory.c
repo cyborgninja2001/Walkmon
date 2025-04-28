@@ -27,7 +27,8 @@ void init_memory() {
     }
 }
 
-uint8_t mem_read8(uint16_t address) {
+uint8_t mem_read8(uint32_t address) {
+    address = address & 0xFFFF; // mask
     if (address < 0x0000 || address > 0xFFFF) {
         printf("Invalid memory address access! mem_read8(0x%04X)\n", address);
         exit(-1);
@@ -47,7 +48,8 @@ uint8_t mem_read8(uint16_t address) {
     }
 }
 
-uint16_t mem_read16(uint16_t address) {
+uint16_t mem_read16(uint32_t address) {
+    address = address & 0xFFFF; // mask
     if (address == 0xFFFF) {
         printf("an attempt is made to read out of memory: mem_read8(0x10000)\n");
         exit(-1);
@@ -66,7 +68,8 @@ uint16_t mem_read16(uint16_t address) {
     return (hi << 8) | lo;
 }
 
-void mem_write8(uint16_t address, uint8_t value) {
+void mem_write8(uint32_t address, uint8_t value) {
+    address = address & 0xFFFF; // mask
     if (address < 0x0000 || address > 0xFFFF) {
         printf("Invalid memory address access! mem_write8(0x%04X)\n", address);
         exit(-1);
@@ -87,7 +90,8 @@ void mem_write8(uint16_t address, uint8_t value) {
     }
 }
 
-void mem_write16(uint16_t address, uint16_t value) {
+void mem_write16(uint32_t address, uint16_t value) {
+    address = address & 0xFFFF; // mask
     if (address == 0xFFFF) {
         printf("an attempt is made to write out of memory: mem_write8(0x10000)\n");
         exit(-1);
