@@ -83,4 +83,6 @@ void set_C(bool v);
 
 void cpu_reset();
 
+void cpu_debug();
+
 #endif

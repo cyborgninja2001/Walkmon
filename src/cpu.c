@@ -81,3 +81,14 @@ void cpu_reset() {
         cpu.er[i] = 0x00000000;
     }
 }
+
+void cpu_debug() {
+    for (int i = 0; i < 8; i++) {
+        printf("er%d: %08X\n", i, cpu.er[i]);
+    }
+    printf("pc: %08X\n", cpu.pc);
+    printf("ccr: %02X\n", cpu.ccr);
+    printf("I:%d UI:%d H:%d U:%d N:%d Z:%d V:%d C:%d \n",
+          I(cpu.ccr), UI(cpu.ccr), H(cpu.ccr), U(cpu.ccr),
+          N(cpu.ccr), Z(cpu.ccr), V(cpu.ccr), C(cpu.ccr));
+}
