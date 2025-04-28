@@ -29,4 +29,10 @@ typedef struct {
 bool load_rom(const char *path);
 void init_memory();
 
+uint8_t mem_read8(uint16_t address);
+uint16_t mem_read16(uint16_t address);
+
+void mem_write8(uint16_t address, uint8_t value);
+void mem_write16(uint16_t address, uint16_t value);
+
 #endif

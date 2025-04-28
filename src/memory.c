@@ -26,3 +26,73 @@ void init_memory() {
         memory.mmio2[i] = 0;
     }
 }
+
+uint8_t mem_read8(uint16_t address) {
+    if (address < 0x0000 || address > 0xFFFF) {
+        printf("Invalid memory address access! mem_read8(0x%04X)\n", address);
+        exit(-1);
+    }
+
+    if (0x0000 <= address && address <= 0xBFFF) {
+        return memory.rom[address];
+    } else if (0xF020 <= address && address <= 0xF0FF) {
+        return memory.mmio1[address - 0xF020];
+    } else if (0xF780 <= address && address <= 0xFF7F) {
+        return memory.ram[address - 0xF780];
+    } else if (0xFF80 <= address && address <= 0xFFFF) {
+        return memory.mmio2[address - 0xFF80];
+    } else {
+        printf("Warning: read from unmapped address 0x%04X\n", address);
+        return 0xFF;
+    }
+}
+
+uint16_t mem_read16(uint16_t address) {
+    if (address == 0xFFFF) {
+        printf("an attempt is made to read out of memory: mem_read8(0x10000)\n");
+        exit(-1);
+    }
+
+    uint8_t hi = mem_read8(address);
+    uint8_t lo;
+    if ((address == 0xBFFF) || (address == 0xF0FF)) {
+        printf("reading an unmaped memory address: 0x%04X\n", address + 1);
+        printf("-> it's going to read trash: 0xFF\n");
+        lo = 0xFF; // trash -> because you're reading an unmapped memory address
+    } else {
+        lo = mem_read8(address + 1);
+    }
+
+    return (hi << 8) | lo;
+}
+
+void mem_write8(uint16_t address, uint8_t value) {
+    if (address < 0x0000 || address > 0xFFFF) {
+        printf("Invalid memory address access! mem_write8(0x%04X)\n", address);
+        exit(-1);
+    }
+
+    if (0x0000 <= address && address <= 0xBFFF) {
+        printf("Attempt to write to ROM: mem_write8(0x%04X)\n", address);
+        exit(-1);
+    } else if (0xF020 <= address && address <= 0xF0FF) {
+        memory.mmio1[address - 0xF020] = value;
+    } else if (0xF780 <= address && address <= 0xFF7F) {
+        memory.ram[address - 0xF780] = value;
+    } else if (0xFF80 <= address && address <= 0xFFFF) {
+        memory.mmio2[address - 0xFF80] = value;
+    } else {
+        printf("Warning: write to unmapped address 0x%04X\n", address);
+        printf("-> It's going to be ignored\n");
+    }
+}
+
+void mem_write16(uint16_t address, uint16_t value) {
+    if (address == 0xFFFF) {
+        printf("an attempt is made to write out of memory: mem_write8(0x10000)\n");
+        exit(-1);
+    }
+
+    mem_write8(address, value >> 8);       // hi
+    mem_write8(address + 1, value & 0xFF); // lo
+}
