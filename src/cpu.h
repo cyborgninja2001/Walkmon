@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "memory.h"
 
 /*
 erX (32 bits) can be splitted into eX (hi 16 bits) & rX (lo 16 bits)
@@ -83,6 +84,8 @@ void set_V(bool v);
 void set_C(bool v);
 
 void cpu_reset();
+uint16_t cpu_fetch16();
+void cpu_step();        // fetch, decode & execute
 
 void cpu_debug();
 

@@ -82,6 +82,31 @@ void cpu_reset() {
     }
 }
 
+uint16_t cpu_fetch16() {
+    uint16_t opcode = mem_read16(cpu.pc & 0xFFFF); // solo 16 bits efectivos
+    cpu.pc += 2;
+    return opcode;
+}
+
+void cpu_step() {
+    uint16_t opcode = cpu_fetch16();
+
+    switch ((opcode & 0xFF00) >> 8) {
+        case 0x00:
+            if ((opcode & 0xFF) == 0x00) {
+                // NOP
+                // it does nothing
+                break;
+            }
+            // otros opcodes 0x00XX
+            break;
+
+        default:
+            printf("Error: opcode not yet implemented 0x%04X in address PC=0x%06X\n", opcode, cpu.pc - 2);
+            exit(-1);
+    }
+}
+
 void cpu_debug() {
     for (int i = 0; i < 8; i++) {
         printf("er%d: %08X\n", i, cpu.er[i]);
