@@ -19,6 +19,8 @@ typedef struct {
     // control registers
     uint32_t pc;    // pc is 24 bits
     uint8_t ccr;    // condition code register
+
+    uint64_t cycles;
 } CPU;
 
 // hi 16 bits
@@ -57,6 +59,18 @@ typedef struct {
 
 // get Carry flag (C) (bit 0)
 #define C(ccr) (ccr & 0x1)
+
+// set the rXl regsiters
+void set_rXl(uint8_t reg, uint8_t value);
+
+// set the rXh registers
+void set_rXh(uint8_t reg, uint8_t value);
+
+// set the rX regsiters
+void set_rX(uint8_t reg, uint16_t value);
+
+// set the eX regsiters
+void set_eX(uint8_t reg, uint16_t value);
 
 // SET CCR BITS
 // set interrupt mask bit (I) (bit 7) with value 'v'

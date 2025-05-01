@@ -55,16 +55,12 @@ uint16_t mem_read16(uint32_t address) {
         exit(-1);
     }
 
-    uint8_t hi = mem_read8(address);
-    uint8_t lo;
-    if ((address == 0xBFFF) || (address == 0xF0FF)) {
-        printf("reading an unmaped memory address: 0x%04X\n", address + 1);
-        printf("-> it's going to read trash: 0xFF\n");
-        lo = 0xFF; // trash -> because you're reading an unmapped memory address
-    } else {
-        lo = mem_read8(address + 1);
+    if (!(address % 2 == 0)) { // it's an odd address
+        address &= ~1;
     }
 
+    uint8_t hi = mem_read8(address);
+    uint8_t lo = mem_read8(address + 1);
     return (hi << 8) | lo;
 }
 
@@ -95,6 +91,10 @@ void mem_write16(uint32_t address, uint16_t value) {
     if (address == 0xFFFF) {
         printf("an attempt is made to write out of memory: mem_write8(0x10000)\n");
         exit(-1);
+    }
+
+    if (!(address % 2 == 0)) { // it's an odd address
+        address &= ~1;
     }
 
     mem_write8(address, value >> 8);       // hi
