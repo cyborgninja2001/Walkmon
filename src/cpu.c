@@ -364,7 +364,8 @@ void cpu_step() {
             break;
         }
         default:
-            printf("Error: opcode not implemented: 0x%02X in PC=0x%06X\n", opcode, cpu.pc - 2);
+            printf("Error: opcode not implemented: 0x%02X\n", opcode);
+            printf("Current PC: %06X\n", cpu.pc);
             exit(-1);
     }
 }
