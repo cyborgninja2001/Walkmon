@@ -52,7 +52,7 @@ uint16_t mem_read16(uint32_t address) {
     address = address & 0xFFFF; // mask
     if (address == 0xFFFF) {
         printf("an attempt is made to read out of memory: mem_read8(0x10000)\n");
-        exit(-1);
+        //exit(-1);
     }
 
     if (!(address % 2 == 0)) { // it's an odd address
