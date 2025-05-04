@@ -912,6 +912,64 @@ static void mov_l_ers_aa24(uint8_t ers, uint32_t aa) {
     cpu.cycles += 12;
 }
 
+// ADD.B #xx:8, Rd
+static void add_b_xx_rd(uint8_t xx, uint8_t rd) {
+    uint8_t a;
+    uint8_t b = xx;
+    uint8_t result;
+
+    if ((rd & 0x8) >> 3) {  // RnL
+        a = rXl(cpu.er[rd & 0x7]);
+        result = a + b;
+        set_rXl(rd & 0x7, result);
+    } else {                // RnH
+        a = rXh(cpu.er[rd & 0x7]);
+        result = a + b;
+        set_rXh(rd & 0x7, result);
+    }
+
+    // set the flags
+    set_H(((a & 0x0F) + (b & 0x0F)) > 0x0F);
+    set_N(result & 0x80);
+    set_Z(result == 0);
+    set_V(((a ^ result) & (b ^ result) & 0x80) != 0);
+    set_C((a + b) > 0xFF);
+
+    cpu.cycles += 2;
+}
+
+// ADD.B Rs, Rd
+static void add_b_rs_rd(uint8_t rs, uint8_t rd) {
+    uint8_t a;
+    uint8_t b;
+    uint8_t result;
+
+    if ((rs & 0x8) >> 3) {  // RnL
+        a = rXl(cpu.er[rs & 0x7]);
+    } else {                // RnH
+        a = rXh(cpu.er[rs & 0x7]);
+    }
+
+    if ((rd & 0x8) >> 3) {  // RnL
+        b = rXl(cpu.er[rd & 0x7]);
+        result = a + b;
+        set_rXl(rd & 0x7, result);
+    } else {                // RnH
+        b = rXh(cpu.er[rd & 0x7]);
+        result = a + b;
+        set_rXh(rd & 0x7, result);
+    }
+
+    // set the flags
+    set_H(((a & 0x0F) + (b & 0x0F)) > 0x0F);
+    set_N(result & 0x80);
+    set_Z(result == 0);
+    set_V(((a ^ result) & (b ^ result) & 0x80) != 0);
+    set_C((a + b) > 0xFF);
+
+    cpu.cycles += 2;
+}
+
 uint8_t cpu_fetch8() {
     if (cpu.pc & 1) {
         printf("*WARNING*: pc is pointing to an odd address!\n");
@@ -932,6 +990,31 @@ void cpu_step() {
 
     switch (opcode) {
         case 0x00: nop(); break; // NOP
+        case 0x08: { // ADD.B Rs, Rd
+            uint8_t second_byte = cpu_fetch8();
+            add_b_rs_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            break;
+        }
+        case 0x80:
+        case 0x81:
+        case 0x82:
+        case 0x83:
+        case 0x84:
+        case 0x85:
+        case 0x86:
+        case 0x87:
+        case 0x88:
+        case 0x89:
+        case 0x8A:
+        case 0x8B:
+        case 0x8C:
+        case 0x8D:
+        case 0x8E:
+        case 0x8F: { // ADD.B #xx:8, Rd
+            uint8_t imm = cpu_fetch8();
+            add_b_xx_rd(imm, opcode & 0x0F);
+            break;
+        }
         case 0x0C: { // MOV.B Rs, Rd
             uint8_t second_byte = cpu_fetch8();
             mov_b_r_r((second_byte & 0xF0) >> 4, second_byte & 0x0F);
