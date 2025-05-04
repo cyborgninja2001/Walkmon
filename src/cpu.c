@@ -476,7 +476,97 @@ static void mov_l_xx_rd(uint32_t xx, uint8_t rd) {
     cpu.cycles += 6;
 }
 
+// MOV.L @ERs, ERd
+static void mov_l_addr_ers_erd(uint8_t ers, uint8_t erd) {
+    uint32_t address = cpu.er[ers & 0x7];
+    uint32_t value = mem_read32(address);
+    cpu.er[erd & 0x7] = value;
+
+    // set the flags
+    set_N(value & 0x80000000);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 8;
+}
+
+// MOV.L @(d:16, ERs), ERd
+static void mov_l_disp16_addr_ers_erd(uint16_t disp, uint8_t ers, uint8_t erd) {
+    uint32_t address = (cpu.er[ers & 0x7] + disp) & 0x00FFFFFF; // only 24 bits
+    uint32_t value = mem_read32(address);
+
+    cpu.er[erd & 0x7] = value;
+
+    // set the flags
+    set_N(value & 0x80000000);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 10;
+}
+
+// MOV.L @(d:24, ERs), ERd
+static void mov_l_disp24_addr_ers_erd(uint32_t disp, uint8_t ers, uint8_t erd) {
+    uint32_t address = (cpu.er[ers & 0x7] + disp) & 0x00FFFFFF; // only 24 bits
+    uint32_t value = mem_read32(address);
+
+    cpu.er[erd & 0x7] = value;
+
+    // set the flags
+    set_N(value & 0x80000000);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 14;
+}
+
+// MOV.L @ERs+, ERd
+static void mov_l_addr_ers_plus_erd(uint8_t ers, uint8_t erd) {
+    uint32_t value = mem_read32(cpu.er[ers & 0x7]);
+    cpu.er[erd & 0x7] = value;
+    cpu.er[ers & 0x7] += 4;
+
+    // set the flags
+    set_N(value & 0x80000000);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 10;
+}
+
+// MOV.L @aa:16, ERd
+static void mov_l_aa16_erd(uint16_t aa, uint8_t erd) {
+    uint32_t value = mem_read32(aa);
+    cpu.er[erd & 0x7] = value;
+
+    // set the flags
+    set_N(value & 0x80000000);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 10;
+}
+
+// MOV.L @aa:24, ERd
+static void mov_l_aa24_erd(uint32_t aa, uint8_t erd) {
+    uint32_t value = mem_read32(aa);
+    cpu.er[erd & 0x7] = value;
+
+    // set the flags
+    set_N(value & 0x80000000);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 12;
+}
+
+// MOV.B Rs, @ERd
+static void mov_l_rs_addr_erd(uint8_t rd, uint8_t erd) {}
+
 uint8_t cpu_fetch8() {
+    if (cpu.pc & 1) {
+        printf("*WARNING*: pc is pointing to an odd address!\n");
+    }
     uint8_t data = mem_read8(cpu.pc & 0xFFFF); // normal mode (16 bits)
     cpu.pc += 1;
     return data;
@@ -673,6 +763,10 @@ void cpu_step() {
                     mov_w_aa24_rd(abs, second_byte & 0x0F);
                     break;
                 }
+                default:
+                    printf("Error: opcode not implemented: ****\n");
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
             }
         }
         case 0x7A: { // MOV.L #xx:32, Rd
@@ -684,6 +778,72 @@ void cpu_step() {
 
             uint32_t imm = (third_byte << 24) | (fourth_byte << 16) | (fifth_byte << 8) | sixth_byte;
             mov_l_xx_rd(imm, second_byte & 0x0F);
+            break;
+        }
+        case 0x01: {
+            uint8_t second_byte = cpu_fetch8(); // should be 0
+            uint8_t third_byte = cpu_fetch8();
+            switch (third_byte) {
+                case 0x69: { // MOV.L @ERs, ERd
+                    uint8_t fourth_byte = cpu_fetch8();
+                    mov_l_addr_ers_erd((fourth_byte & 0xF0) >> 4, fourth_byte & 0x0F);
+                    break;
+                }
+                case 0x6F: { // MOV.L @(d:16, ERs), ERd
+                    uint8_t fourth_byte = cpu_fetch8();
+                    uint8_t fifth_byte = cpu_fetch8();
+                    uint8_t sixth_byte = cpu_fetch8();
+
+                    uint16_t disp = (fifth_byte << 8) | sixth_byte;
+                    mov_l_disp16_addr_ers_erd(disp, (fourth_byte & 0xF0) >> 4, fourth_byte & 0x0F);
+                    break;
+                }
+                case 0x78: { // MOV.L @(d:16, ERs), ERd
+                    uint8_t fourth_byte = cpu_fetch8();
+                    uint8_t fifth_byte = cpu_fetch8();
+                    uint8_t sixth_byte = cpu_fetch8();
+                    uint8_t seventh_byte = cpu_fetch8();
+                    uint8_t eigth_byte = cpu_fetch8();
+                    uint8_t nineth_byte = cpu_fetch8();
+                    uint8_t tenth_byte = cpu_fetch8();
+
+                    uint32_t disp = (eigth_byte << 16) | (nineth_byte << 8) | tenth_byte;
+                    mov_l_disp24_addr_ers_erd(disp, (fourth_byte & 0xF0) >> 4, sixth_byte & 0x0F);
+                    break;
+                }
+                case 0x6D: { // MOV.L @ERs+, ERd
+                    uint8_t fourth_byte = cpu_fetch8();
+                    mov_l_addr_ers_plus_erd((fourth_byte & 0xF0) >> 4, fourth_byte & 0x0F);
+                    break;
+                }
+                case 0x6B: {
+                    uint8_t fourth_byte = cpu_fetch8();
+                    switch (fourth_byte & 0xF0) {
+                        case 0x00: { // MOV.L @aa:16, ERd
+                            uint8_t fifth_byte = cpu_fetch8();
+                            uint8_t sixth_byte = cpu_fetch8();
+
+                            uint16_t abs = (fifth_byte << 8) | sixth_byte;
+                            mov_l_aa16_erd(abs, fourth_byte & 0x0F);
+                            break;
+                        }
+                        case 0x20: { // MOV.L @aa:24, ERd
+                            uint8_t fifth_byte = cpu_fetch8(); // should be 0
+                            uint8_t sixth_byte = cpu_fetch8();
+                            uint8_t seventh_byte = cpu_fetch8();
+                            uint8_t eigth_byte = cpu_fetch8();
+
+                            uint32_t abs = (sixth_byte << 16) | (seventh_byte << 8) | eigth_byte;
+                            mov_l_aa24_erd(abs, fourth_byte & 0x0F);
+                            break;
+                        }
+                    }
+                }
+                default:
+                    printf("Error: opcode not implemented: ****\n");
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
+            }
             break;
         }
         default:
