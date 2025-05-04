@@ -116,3 +116,20 @@ void mem_write16(uint32_t address, uint16_t value) {
     mem_write8(address, value >> 8);       // hi
     mem_write8(address + 1, value & 0xFF); // lo
 }
+
+void mem_write32(uint32_t address, uint32_t value) {
+    address = address & 0xFFFF; // mask
+    if (address == 0xFFFF || address == 0xFFFE) {
+        printf("an attempt is made to write out of memory *mem_write32*\n");
+        exit(-1);
+    }
+
+    if (!(address % 2 == 0)) { // it's an odd address
+        //address &= ~1;
+        printf("*ERROR: ODD ADDRESS!* mem_write16()\n");
+        exit(-1);
+    }
+
+    mem_write16(address, value >> 16);        // hi
+    mem_write16(address + 2, value & 0xFFFF); // lo
+}
