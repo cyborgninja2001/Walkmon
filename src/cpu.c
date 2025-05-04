@@ -561,7 +561,274 @@ static void mov_l_aa24_erd(uint32_t aa, uint8_t erd) {
 }
 
 // MOV.B Rs, @ERd
-static void mov_l_rs_addr_erd(uint8_t rd, uint8_t erd) {}
+static void mov_b_rs_addr_erd(uint8_t rs, uint8_t erd) {
+    uint8_t value;
+
+    if ((rs & 0x8) >> 3) {  // RnL
+        value = rXl(cpu.er[rs & 0x7]);
+    } else {                // RnH
+        value = rXh(cpu.er[rs & 0x7]);
+    }
+
+    uint32_t address = cpu.er[erd & 0x7];
+
+    mem_write8(address, value);
+
+    // set the flags
+    set_N(value & 0x80);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 4;
+}
+
+// MOV.B Rs, @(d:16, ERd)
+static void mov_b_rs_disp16_addr_erd(uint16_t disp , uint8_t rs, uint8_t erd) {
+    uint8_t value;
+
+    if ((rs & 0x8) >> 3) {  // RnL
+        value = rXl(cpu.er[rs & 0x7]);
+    } else {                // RnH
+        value = rXh(cpu.er[rs & 0x7]);
+    }
+
+    uint32_t address = cpu.er[erd & 0x7] + disp;
+
+    mem_write8(address, value);
+
+    // set the flags
+    set_N(value & 0x80);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 6;
+}
+
+// MOV.B Rs, @(d:24, ERd)
+static void mov_b_rs_disp24_addr_erd(uint32_t disp, uint8_t rs, uint8_t erd) {
+    uint8_t value;
+
+    if ((rs & 0x8) >> 3) {  // RnL
+        value = rXl(cpu.er[rs & 0x7]);
+    } else {                // RnH
+        value = rXh(cpu.er[rs & 0x7]);
+    }
+
+    uint32_t address = cpu.er[erd & 0x7] + disp;
+
+    mem_write8(address, value);
+
+    // set the flags
+    set_N(value & 0x80);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 10;
+}
+
+// MOV.B Rs, @-ERs
+static void mov_b_rs_minus_addr_ers(uint8_t rs, uint8_t ers) {
+    cpu.er[ers & 0x7] -= 1;
+    uint32_t address  = cpu.er[ers & 0x7];
+
+    uint8_t value;
+
+    if ((rs & 0x8) >> 3) {  // RnL
+        value = rXl(cpu.er[rs & 0x7]);
+    } else {                // RnH
+        value = rXh(cpu.er[rs & 0x7]);
+    }
+
+    mem_write8(address, value);
+
+    // set the flags
+    set_N(value & 0x80);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 6;
+}
+
+// MOV.B Rs, @aa:8
+static void mov_b_rs_aa8(uint8_t rs, uint8_t aa) {
+    uint8_t value;
+
+    if ((rs & 0x8) >> 3) {  // RnL
+        value = rXl(cpu.er[rs & 0x7]);
+    } else {                // RnH
+        value = rXh(cpu.er[rs & 0x7]);
+    }
+
+    mem_write8(aa, value);
+
+    // set the flags
+    set_N(value & 0x80);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 4;
+}
+
+// MOV.B Rs, @aa:16
+static void mov_b_rs_aa16(uint8_t rs, uint16_t aa) {
+    uint8_t value;
+
+    if ((rs & 0x8) >> 3) {  // RnL
+        value = rXl(cpu.er[rs & 0x7]);
+    } else {                // RnH
+        value = rXh(cpu.er[rs & 0x7]);
+    }
+
+    mem_write8(aa, value);
+
+    // set the flags
+    set_N(value & 0x80);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 6;
+}
+
+// MOV.B Rs, @aa:24
+static void mov_b_rs_aa24(uint8_t rs, uint32_t aa) {
+    uint8_t value;
+
+    if ((rs & 0x8) >> 3) {  // RnL
+        value = rXl(cpu.er[rs & 0x7]);
+    } else {                // RnH
+        value = rXh(cpu.er[rs & 0x7]);
+    }
+
+    mem_write8(aa, value);
+
+    // set the flags
+    set_N(value & 0x80);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 8;
+}
+
+// MOV.W Rs, @ERd
+static void mov_w_rs_addr_erd(uint8_t rs, uint8_t erd) {
+    uint16_t value;
+    if ((rs & 0x8) >> 3) { // En
+        value = eX(cpu.er[rs & 0x7]);
+    } else {               // Rn
+        value = rX(cpu.er[rs & 0x7]);
+    }
+
+    mem_write16(cpu.er[erd & 0x7], value);
+
+    // set the flags
+    set_N(value & 0x8000);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 4;
+}
+
+// MOV.W Rs, @(d:16, Erd)
+static void mov_w_rs_disp16_addr_erd(uint8_t rs, uint16_t disp, uint8_t erd) {
+    uint16_t value;
+    if ((rs & 0x8) >> 3) { // En
+        value = eX(cpu.er[rs & 0x7]);
+    } else {               // Rn
+        value = rX(cpu.er[rs & 0x7]);
+    }
+
+    uint32_t address = cpu.er[erd & 0x7] + disp;
+    mem_write16(address, value);
+
+    // set the flags
+    set_N(value & 0x8000);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 6;
+}
+
+// MOV.W Rs, @(d:24, Erd)
+static void mov_w_rs_disp24_addr_erd(uint8_t rs, uint32_t disp, uint8_t erd) {
+    uint16_t value;
+    if ((rs & 0x8) >> 3) { // En
+        value = eX(cpu.er[rs & 0x7]);
+    } else {               // Rn
+        value = rX(cpu.er[rs & 0x7]);
+    }
+
+    uint32_t address = cpu.er[erd & 0x7] + disp;
+    mem_write16(address, value);
+
+    // set the flags
+    set_N(value & 0x8000);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 10;
+}
+
+// MOV.W Rs, @-ERd
+static void mov_w_rs_minus_addr_erd(uint8_t rs, uint8_t erd) {
+    cpu.er[erd & 0x7] -= 2;
+    uint32_t address = cpu.er[erd & 0x7];
+
+    uint16_t value;
+    if ((rs & 0x8) >> 3) { // En
+        value = eX(cpu.er[rs & 0x7]);
+    } else {               // Rn
+        value = rX(cpu.er[rs & 0x7]);
+    }
+
+    mem_write16(address, value);
+
+    // set the flags
+    set_N(value & 0x8000);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 6;
+}
+
+// MOV.W Rs, @aa:16
+static void mov_w_rs_aa16(uint8_t rs, uint16_t aa) {
+    uint16_t value;
+    if ((rs & 0x8) >> 3) { // En
+        value = eX(cpu.er[rs & 0x7]);
+    } else {               // Rn
+        value = rX(cpu.er[rs & 0x7]);
+    }
+
+    mem_write16(aa, value);
+
+    // set the flags
+    set_N(value & 0x8000);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 6;
+}
+
+// MOV.W Rs, @aa:24
+static void mov_w_rs_aa24(uint8_t rs, uint32_t aa) {
+    uint16_t value;
+    if ((rs & 0x8) >> 3) { // En
+        value = eX(cpu.er[rs & 0x7]);
+    } else {               // Rn
+        value = rX(cpu.er[rs & 0x7]);
+    }
+
+    mem_write16(aa, value);
+
+    // set the flags
+    set_N(value & 0x8000);
+    set_Z(value == 0);
+    set_V(false);
+
+    cpu.cycles += 8;
+}
+
+// MOV.L
 
 uint8_t cpu_fetch8() {
     if (cpu.pc & 1) {
@@ -618,16 +885,41 @@ void cpu_step() {
             mov_b_xx_r(imm, opcode & 0x0F);
             break;
         }
-        case 0x68: { // MOV.B @ers, Rd
+        case 0x68: {
             uint8_t second_byte = cpu_fetch8();
-            mov_b_addr_ers_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
-            break;
+            switch (second_byte & 0x80) {
+                case 0x00: { // MOV.B @ers, Rd
+                    mov_b_addr_ers_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+                    break;
+                }
+                case 0x80: { // MOV.B Rs, @ERd
+                    mov_b_rs_addr_erd(second_byte & 0x0F, (second_byte & 0xF0) >> 4);
+                    break;
+                }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
+            }
         }
-        case 0x6E: { // MOV.B @(d:16, ERs), Rd
+        case 0x6E: {
             uint8_t second_byte = cpu_fetch8();
-            uint16_t disp = cpu_fetch16(); // 3rd & 4th byte
-            mov_b_disp16_addr_ers_rd(disp, (second_byte & 0xF0) >> 4, second_byte & 0x0F);
-            break;
+            switch (second_byte & 0x80) {
+                case 0x00: { // MOV.B @(d:16, ERs), Rd
+                    uint16_t disp = cpu_fetch16(); // 3rd & 4th byte
+                    mov_b_disp16_addr_ers_rd(disp, (second_byte & 0xF0) >> 4, second_byte & 0x0F);
+                    break;
+                }
+                case 0x80: { // MOV.B Rs, @(d:16, ERd)
+                    uint16_t disp = cpu_fetch16(); // 3rd & 4th byte
+                    mov_b_rs_disp16_addr_erd(disp, second_byte & 0x0F, (second_byte & 0xF0) >> 4);
+                    break;
+                }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
+            }
         }
         case 0x78: {
             uint8_t second_byte = cpu_fetch8();
@@ -635,38 +927,59 @@ void cpu_step() {
             uint8_t fourth_byte = cpu_fetch8();
             uint8_t fifth_byte = cpu_fetch8(); // it only has 0's
 
-            if (((fourth_byte & 0xF0) != 0x20) || (fifth_byte != 0x00)) {
-                printf("Error: unknown extended MOV.{B,W,L} (expected 0x2n 0x00) format at PC=0x%06X\n", cpu.pc - 5);
-                exit(-1);
-            }
             switch (third_byte) {
-                case 0x6A: { // MOV.B @(d:24, ERs), Rd
+                case 0x6A: {
                     //disp
                     uint8_t sixth_byte = cpu_fetch8();
                     uint8_t seventh_byte = cpu_fetch8();
                     uint8_t eight_byte = cpu_fetch8();
 
                     uint32_t disp = (sixth_byte << 16) | (seventh_byte << 8) | eight_byte;
-                    mov_b_disp24_addr_ers_rd(disp, (second_byte & 0xF0) >> 4, fourth_byte & 0x0F);
-                    break;
+
+                    switch (fourth_byte & 0xF0) {
+                        case 0x20: { // MOV.B @(d:24, ERs), Rd
+                            mov_b_disp24_addr_ers_rd(disp, (second_byte & 0xF0) >> 4, fourth_byte & 0x0F);
+                            break;
+                        }
+                        case 0xA0: { // MOV.B Rs, @(d:24, ERd)
+                            mov_b_rs_disp24_addr_erd(disp, fourth_byte & 0x0F, (second_byte & 0xF0) >> 4);
+                            break;
+                        }
+                    }
                 }
-                case 0x6B: { // MOV.W @(d:24, ERs), Rd
+                case 0x6B: {
                     //disp
                     uint8_t sixth_byte = cpu_fetch8();
                     uint8_t seventh_byte = cpu_fetch8();
                     uint8_t eight_byte = cpu_fetch8();
 
                     uint32_t disp = (sixth_byte << 16) | (seventh_byte << 8) | eight_byte;
-                    mov_w_disp24_addr_ers_rd(disp, (second_byte & 0xF0) >> 4, fourth_byte & 0x0F);
-                    break;
+                    switch (fourth_byte & 0xF0) {
+                        case 0x20: { // MOV.W @(d:24, ERs), Rd
+                            mov_w_disp24_addr_ers_rd(disp, (second_byte & 0xF0) >> 4, fourth_byte & 0x0F);
+                            break;
+                        }
+                        case 0xA0: { // MOV.W Rs, @(d:24, Erd)
+                            mov_w_rs_disp24_addr_erd(fourth_byte & 0x0F, disp, (second_byte & 0xF0) >> 4);
+                            break;
+                        }
+                    }
                 }
             }
             break;
         }
-        case 0x6C: { // MOV.B @ERs+, Rd
+        case 0x6C: {
             uint8_t second_byte = cpu_fetch8();
-            mov_b_addr_ers_plus_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
-            break;
+            switch (second_byte & 0x80) {
+                case 0x00: { // MOV.B @ERs+, Rd
+                    mov_b_addr_ers_plus_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+                    break;
+                }
+                case 0x80: { // MOV.B Rs, @-ERs
+                    mov_b_rs_minus_addr_ers(second_byte & 0x0F, (second_byte & 0xF0) >> 4);
+                    break;
+                }
+            }
         }
         case 0x20:
         case 0x21:
@@ -711,6 +1024,26 @@ void cpu_step() {
                     mov_b_aa24_rd(abs, second_byte & 0x0F);
                     break;
                 }
+                case 0x80: { // MOV.B Rs, @aa:16
+                    uint8_t third_byte = cpu_fetch8();
+                    uint8_t fourth_byte = cpu_fetch8();
+                    uint16_t abs = (third_byte << 8) | fourth_byte;
+                    mov_b_rs_aa16(second_byte & 0x0F, abs);
+                    break;
+                }
+                case 0xA0: { // MOV.B Rs, @aa:24
+                    uint8_t third_byte = cpu_fetch8();
+                    if (third_byte != 0x00) {
+                        printf("Error: unknown extended MOV.B @aa:24, Rd format. 3rd byte must be 0x00: %02X \n", third_byte);
+                        exit(-1);
+                    }
+                    uint8_t fourth_byte = cpu_fetch8();
+                    uint8_t fifth_byte = cpu_fetch8();
+                    uint8_t sixth_byte = cpu_fetch8();
+                    uint32_t abs = (fourth_byte << 16) | (fifth_byte << 8) | sixth_byte;
+                    mov_b_rs_aa24(second_byte & 0x0F, abs);
+                    break;
+                }
                 default:
                     printf("Error: opcode not implemented: 0x%02X\n", opcode);
                     printf("Current PC: %06X\n", cpu.pc);
@@ -725,24 +1058,48 @@ void cpu_step() {
             mov_w_xx_rd(imm, second_byte & 0x0F);
             break;
         }
-        case 0x69: { // MOV.W @ERs, Rd
+        case 0x69: {
             uint8_t second_byte = cpu_fetch8();
-            mov_w_addr_ers_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
-            break;
+            switch (second_byte & 0x80) {
+                case 0x00: { // MOV.W @ERs, Rd
+                    mov_w_addr_ers_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+                    break;
+                }
+                case 0x80: { // MOV.W Rs, @ERd
+                    mov_w_rs_addr_erd(second_byte & 0x0F, (second_byte & 0xF0) >> 4);
+                    break;
+                }
+            }
         }
-        case 0x6F: { // MOV.W @(d:16, Ers), Rd
+        case 0x6F: {
             uint8_t second_byte = cpu_fetch8();
             uint8_t third_byte = cpu_fetch8();
             uint8_t fourth_byte = cpu_fetch8();
 
             uint16_t disp = (third_byte << 8) | fourth_byte;
-            mov_w_disp16_addr_ers_rd(disp, (second_byte & 0xF0) >> 4, second_byte & 0x0F);
-            break;
+            switch (second_byte & 0x80) {
+                case 0x00: { // MOV.W @(d:16, Ers), Rd
+                    mov_w_disp16_addr_ers_rd(disp, (second_byte & 0xF0) >> 4, second_byte & 0x0F);
+                    break;
+                }
+                case 0x80: { // MOV.W Rs, @(d:16, Erd)
+                    mov_w_rs_disp16_addr_erd(second_byte & 0x0F, disp, (second_byte & 0xF0) >> 4);
+                    break;
+                }
+            }
         }
-        case 0x6D: { // MOV.W @ERs+, Rd
+        case 0x6D: {
             uint8_t second_byte = cpu_fetch8();
-            mov_w_addr_ers_plus_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
-            break;
+            switch (second_byte & 0x80) {
+                case 0x00: { // MOV.W @ERs+, Rd
+                    mov_w_addr_ers_plus_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+                    break;
+                }
+                case 0x80: { // MOV.W Rs, @-ERd
+                    mov_w_rs_minus_addr_erd(second_byte & 0x0F, (second_byte & 0xF0) >> 4);
+                    break;
+                }
+            }
         }
         case 0x6B: {
             uint8_t second_byte = cpu_fetch8();
@@ -761,6 +1118,22 @@ void cpu_step() {
                     uint8_t sixth_byte = cpu_fetch8();
                     uint32_t abs = (fourth_byte << 16) | (fifth_byte << 8) | sixth_byte;
                     mov_w_aa24_rd(abs, second_byte & 0x0F);
+                    break;
+                }
+                case 0x80: { // MOV.W Rs, @aa:16
+                    uint8_t third_byte = cpu_fetch8();
+                    uint8_t fourth_byte = cpu_fetch8();
+                    uint16_t abs = (third_byte << 8) | fourth_byte;
+                    mov_w_rs_aa16(second_byte & 0x0F, abs);
+                    break;
+                }
+                case 0xA0: { // MOV.W Rs, @aa:24
+                    uint8_t third_byte = cpu_fetch8(); // should be 0
+                    uint8_t fourth_byte = cpu_fetch8();
+                    uint8_t fifth_byte = cpu_fetch8();
+                    uint8_t sixth_byte = cpu_fetch8();
+                    uint32_t abs = (fourth_byte << 16) | (fifth_byte << 8) | sixth_byte;
+                    mov_w_rs_aa24(second_byte & 0x0F, abs);
                     break;
                 }
                 default:
@@ -844,6 +1217,26 @@ void cpu_step() {
                     printf("Current PC: %06X\n", cpu.pc);
                     exit(-1);
             }
+            break;
+        }
+        case 0x30:
+        case 0x31:
+        case 0x32:
+        case 0x33:
+        case 0x34:
+        case 0x35:
+        case 0x36:
+        case 0x37:
+        case 0x38:
+        case 0x39:
+        case 0x3A:
+        case 0x3B:
+        case 0x3C:
+        case 0x3D:
+        case 0x3E:
+        case 0x3F: { // MOV.B Rs, @aa:8
+            uint8_t abs = cpu_fetch8(); // second byte
+            mov_b_rs_aa8(opcode & 0x0F, abs);
             break;
         }
         default:
