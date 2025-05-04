@@ -970,6 +970,62 @@ static void add_b_rs_rd(uint8_t rs, uint8_t rd) {
     cpu.cycles += 2;
 }
 
+// ADD.W #xx:16, Rd
+static void add_w_xx_rd(uint16_t xx, uint8_t rd) {
+    uint16_t a = xx;
+    uint16_t b;
+    uint16_t result;
+    if ((rd & 0x8) >> 3) { // En
+        b = eX(cpu.er[rd & 0x7]);
+        result = a + b;
+        set_eX(rd & 0x7, result);
+    } else {               // Rn
+        b = rX(cpu.er[rd & 0x7]);
+        result = a + b;
+        set_rX(rd & 0x7, result);
+    }
+
+    // set the flags
+    set_H(((a & 0x0FFF) + (b & 0x0FFF)) > 0x0FFF); // ? check
+    set_N(result & 0x8000);
+    set_Z(result == 0);
+    set_V(((a ^ result) & (b ^ result) & 0x8000) != 0);
+    set_C((uint32_t)a + (uint32_t)b > 0xFFFF);
+
+    cpu.cycles += 4;
+}
+
+// ADD.W Rs, Rd
+static void add_w_rs_rd(uint8_t rs, uint8_t rd) {
+    uint16_t a;
+    uint16_t b;
+    uint16_t result;
+    if ((rs & 0x8) >> 3) { // En
+        a = eX(cpu.er[rs & 0x7]);
+    } else {               // Rn
+        a = rX(cpu.er[rs & 0x7]);
+    }
+
+    if ((rd & 0x8) >> 3) { // En
+        b = eX(cpu.er[rd & 0x7]);
+        result = a + b;
+        set_eX(rd & 0x7, result);
+    } else {               // Rn
+        b = rX(cpu.er[rd & 0x7]);
+        result = a + b;
+        set_rX(rd & 0x7, result);
+    }
+
+    // set the flags
+    set_H(((a & 0x0FFF) + (b & 0x0FFF)) > 0x0FFF); // ? check
+    set_N(result & 0x8000);
+    set_Z(result == 0);
+    set_V(((a ^ result) & (b ^ result) & 0x8000) != 0);
+    set_C((uint32_t)a + (uint32_t)b > 0xFFFF);
+
+    cpu.cycles += 2;
+}
+
 uint8_t cpu_fetch8() {
     if (cpu.pc & 1) {
         printf("*WARNING*: pc is pointing to an odd address!\n");
@@ -1013,6 +1069,11 @@ void cpu_step() {
         case 0x8F: { // ADD.B #xx:8, Rd
             uint8_t imm = cpu_fetch8();
             add_b_xx_rd(imm, opcode & 0x0F);
+            break;
+        }
+        case 0x09: { // ADD.W Rs, Rd
+            uint8_t second_byte = cpu_fetch8();
+            add_w_rs_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
             break;
         }
         case 0x0C: { // MOV.B Rs, Rd
@@ -1215,12 +1276,23 @@ void cpu_step() {
                     exit(-1);
             }
         }
-        case 0x79: { // MOV.W #xx:16, Rd
+        case 0x79: {
             uint8_t second_byte = cpu_fetch8();
-            uint8_t third_byte = cpu_fetch8();
-            uint8_t fourth_byte = cpu_fetch8();
-            uint16_t imm = (third_byte << 8) | fourth_byte;
-            mov_w_xx_rd(imm, second_byte & 0x0F);
+            switch (second_byte & 0xF0) {
+                case 0x00: { // MOV.W #xx:16, Rd
+                    uint8_t third_byte = cpu_fetch8();
+                    uint8_t fourth_byte = cpu_fetch8();
+                    uint16_t imm = (third_byte << 8) | fourth_byte;
+                    mov_w_xx_rd(imm, second_byte & 0x0F);
+                }
+                case  0x10: { // ADD.W #xx:16, Rd
+                    uint8_t third_byte = cpu_fetch8();
+                    uint8_t fourth_byte = cpu_fetch8();
+                    uint16_t imm = (third_byte << 8) | fourth_byte;
+                    add_w_xx_rd(imm, second_byte & 0x0F);
+                    break;
+                }
+            }
             break;
         }
         case 0x69: {
