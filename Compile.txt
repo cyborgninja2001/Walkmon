@@ -1,1 +1,4 @@
 gcc src/main.c src/cpu.c src/memory.c src/eeprom.c -o main
+
+*RUN*
+./main ../../project_resources/rom.bin ../../project_resources/eeprom.bin
