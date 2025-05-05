@@ -1026,6 +1026,42 @@ static void add_w_rs_rd(uint8_t rs, uint8_t rd) {
     cpu.cycles += 2;
 }
 
+// ADD.L #xx:32, ERd
+static void add_l_xx_rd(uint32_t xx, uint8_t erd) {
+    uint32_t a = xx;
+    uint32_t b = cpu.er[erd & 0x7];
+    uint32_t result = a + b;
+
+    cpu.er[erd & 0x7] = result;
+
+    // set the flags
+    set_H(((a & 0x0FFFFFFF) + (b & 0x0FFFFFFF)) > 0x0FFFFFFF); // carry on bit 27
+    set_N(result & 0x80000000);                                // bit 31
+    set_Z(result == 0);
+    set_V(((a ^ result) & (b ^ result) & 0x80000000) != 0);     // overflow with sign
+    set_C(((uint64_t)a + (uint64_t)b) > 0xFFFFFFFF);            // carry on bit 31
+
+    cpu.cycles += 6;
+}
+
+// ADD.L Rs, Erd
+static void add_l_rs_erd(uint8_t ers, uint8_t erd) {
+    uint32_t a = cpu.er[ers & 0x7];
+    uint32_t b = cpu.er[erd & 0x7];
+    uint32_t result = a + b;
+
+    cpu.er[erd & 0x7] = result;
+
+    // set the flags
+    set_H(((a & 0x0FFFFFFF) + (b & 0x0FFFFFFF)) > 0x0FFFFFFF); // carry on bit 27
+    set_N(result & 0x80000000);                                // bit 31
+    set_Z(result == 0);
+    set_V(((a ^ result) & (b ^ result) & 0x80000000) != 0);     // overflow with sign
+    set_C(((uint64_t)a + (uint64_t)b) > 0xFFFFFFFF);            // carry on bit 31
+
+    cpu.cycles += 2;
+}
+
 uint8_t cpu_fetch8() {
     if (cpu.pc & 1) {
         printf("*WARNING*: pc is pointing to an odd address!\n");
@@ -1074,6 +1110,11 @@ void cpu_step() {
         case 0x09: { // ADD.W Rs, Rd
             uint8_t second_byte = cpu_fetch8();
             add_w_rs_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            break;
+        }
+        case 0x0A: { // ADD.L Rs, Erd
+            uint8_t second_byte = cpu_fetch8();
+            add_l_rs_erd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
             break;
         }
         case 0x0C: { // MOV.B Rs, Rd
@@ -1379,7 +1420,7 @@ void cpu_step() {
                     exit(-1);
             }
         }
-        case 0x7A: { // MOV.L #xx:32, Rd
+        case 0x7A: {
             uint8_t second_byte = cpu_fetch8();
             uint8_t third_byte = cpu_fetch8();
             uint8_t fourth_byte = cpu_fetch8();
@@ -1387,8 +1428,16 @@ void cpu_step() {
             uint8_t sixth_byte = cpu_fetch8();
 
             uint32_t imm = (third_byte << 24) | (fourth_byte << 16) | (fifth_byte << 8) | sixth_byte;
-            mov_l_xx_rd(imm, second_byte & 0x0F);
-            break;
+            switch (second_byte & 0xF0) {
+                case 0x00: { // MOV.L #xx:32, Rd
+                    mov_l_xx_rd(imm, second_byte & 0x0F);
+                    break;
+                }
+                case 0x10: { // ADD.L #xx:32, ERd
+                    add_l_xx_rd(imm, second_byte & 0x0F);
+                    break;
+                }
+            }
         }
         case 0x01: {
             uint8_t second_byte = cpu_fetch8(); // should be 0
