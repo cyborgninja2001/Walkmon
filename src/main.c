@@ -20,6 +20,10 @@ int main(int argc, char *argv[]) {
     cpu_reset();
     cpu_debug();
 
+    printf("PC     -> memory: 0x%02X\n", mem_read8(0x2C4));     // opcode
+    printf("PC + 1 -> memory: 0x%02X\n", mem_read8(0x2C4 + 1)); // registro
+    printf("PC + 2 -> memory: 0x%02X\n", mem_read16(0x2C4 + 2)); // imm or xx
+
     while (true) {
         cpu_step();
         cpu_debug();
