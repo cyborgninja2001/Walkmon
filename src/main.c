@@ -19,5 +19,10 @@ int main(int argc, char *argv[]) {
     }
     cpu_reset();
     cpu_debug();
+
+    while (true) {
+        cpu_step();
+        cpu_debug();
+    }
     return 0;
 }

@@ -89,8 +89,8 @@ void set_C(bool v) {
 void cpu_reset() {
     // pc is loaded from the vector table
     cpu.pc = 0x00000000;
-    uint32_t vector = (mem_read16(0x0000) << 16); // hi
-    vector |= mem_read16(0x0002);                 // lo
+    uint32_t vector =  mem_read16(0x0000); // hi
+    //vector |= mem_read16(0x0002);                 // lo
     cpu.pc = vector & 0xFFFFFF;                   // only use 24 bits
 
     // just in case
@@ -1064,7 +1064,7 @@ static void add_l_rs_erd(uint8_t ers, uint8_t erd) {
 
 uint8_t cpu_fetch8() {
     if (cpu.pc & 1) {
-        printf("*WARNING*: pc is pointing to an odd address!\n");
+        printf("*WARNING*: pc is pointing to an odd address! 0x%06X\n", cpu.pc);
     }
     uint8_t data = mem_read8(cpu.pc & 0xFFFF); // normal mode (16 bits)
     cpu.pc += 1;
@@ -1079,12 +1079,18 @@ uint16_t cpu_fetch16() {
 
 void cpu_step() {
     uint8_t opcode = cpu_fetch8();
+    //printf("OPCODE: %02X\n", opcode);
 
     switch (opcode) {
-        case 0x00: nop(); break; // NOP
+        case 0x00: { // NOP
+            nop();
+            printf("NOP\n");
+            break;
+        }
         case 0x08: { // ADD.B Rs, Rd
             uint8_t second_byte = cpu_fetch8();
             add_b_rs_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("ADD.B Rs, Rd\n");
             break;
         }
         case 0x80:
@@ -1105,31 +1111,37 @@ void cpu_step() {
         case 0x8F: { // ADD.B #xx:8, Rd
             uint8_t imm = cpu_fetch8();
             add_b_xx_rd(imm, opcode & 0x0F);
+            printf("ADD.B #xx:8, Rd\n");
             break;
         }
         case 0x09: { // ADD.W Rs, Rd
             uint8_t second_byte = cpu_fetch8();
             add_w_rs_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("ADD.W Rs, Rd\n");
             break;
         }
         case 0x0A: { // ADD.L Rs, Erd
             uint8_t second_byte = cpu_fetch8();
             add_l_rs_erd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("ADD.L Rs, Erd\n");
             break;
         }
         case 0x0C: { // MOV.B Rs, Rd
             uint8_t second_byte = cpu_fetch8();
             mov_b_r_r((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("MOV.B Rs, Rd\n");
             break;
         }
         case 0x0D: { // MOV.W Rs, Rd
             uint8_t second_byte = cpu_fetch8();
             mov_w_r_r((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("MOV.W Rs, Rd\n");
             break;
         }
         case 0x0F: { // MOV.L Rs, Rd
             uint8_t second_byte = cpu_fetch8();
             mov_l_r_r((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("MOV.L Rs, Rd\n");
             break;
         }
         case 0xF0:
@@ -1150,6 +1162,7 @@ void cpu_step() {
         case 0xFF: { // MOV.B #xx:8, Rd
             uint8_t imm = cpu_fetch8();
             mov_b_xx_r(imm, opcode & 0x0F);
+            printf("MOV.B #xx:8, Rd\n");
             break;
         }
         case 0x68: {
@@ -1157,10 +1170,12 @@ void cpu_step() {
             switch (second_byte & 0x80) {
                 case 0x00: { // MOV.B @ers, Rd
                     mov_b_addr_ers_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+                    printf("MOV.B @ers, Rd\n");
                     break;
                 }
                 case 0x80: { // MOV.B Rs, @ERd
                     mov_b_rs_addr_erd(second_byte & 0x0F, (second_byte & 0xF0) >> 4);
+                    printf("MOV.B Rs, @ERd\n");
                     break;
                 }
                 default:
@@ -1175,11 +1190,13 @@ void cpu_step() {
                 case 0x00: { // MOV.B @(d:16, ERs), Rd
                     uint16_t disp = cpu_fetch16(); // 3rd & 4th byte
                     mov_b_disp16_addr_ers_rd(disp, (second_byte & 0xF0) >> 4, second_byte & 0x0F);
+                    printf("MOV.B @(d:16, ERs), Rd\n");
                     break;
                 }
                 case 0x80: { // MOV.B Rs, @(d:16, ERd)
                     uint16_t disp = cpu_fetch16(); // 3rd & 4th byte
                     mov_b_rs_disp16_addr_erd(disp, second_byte & 0x0F, (second_byte & 0xF0) >> 4);
+                    printf("MOV.B Rs, @(d:16, ERd)\n");
                     break;
                 }
                 default:
@@ -1206,12 +1223,18 @@ void cpu_step() {
                     switch (fourth_byte & 0xF0) {
                         case 0x20: { // MOV.B @(d:24, ERs), Rd
                             mov_b_disp24_addr_ers_rd(disp, (second_byte & 0xF0) >> 4, fourth_byte & 0x0F);
+                            printf("MOV.B @(d:24, ERs), Rd\n");
                             break;
                         }
                         case 0xA0: { // MOV.B Rs, @(d:24, ERd)
                             mov_b_rs_disp24_addr_erd(disp, fourth_byte & 0x0F, (second_byte & 0xF0) >> 4);
+                            printf("MOV.B Rs, @(d:24, Erd)\n");
                             break;
                         }
+                        default:
+                            printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                            printf("Current PC: %06X\n", cpu.pc);
+                            exit(-1);
                     }
                 }
                 case 0x6B: {
@@ -1224,14 +1247,24 @@ void cpu_step() {
                     switch (fourth_byte & 0xF0) {
                         case 0x20: { // MOV.W @(d:24, ERs), Rd
                             mov_w_disp24_addr_ers_rd(disp, (second_byte & 0xF0) >> 4, fourth_byte & 0x0F);
+                            printf("MOV.W @(d:24, Ers) Rd\n");
                             break;
                         }
                         case 0xA0: { // MOV.W Rs, @(d:24, Erd)
                             mov_w_rs_disp24_addr_erd(fourth_byte & 0x0F, disp, (second_byte & 0xF0) >> 4);
+                            printf("MOV.W Rs, @(d:24, ERd)\n");
                             break;
                         }
+                        default:
+                            printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                            printf("Current PC: %06X\n", cpu.pc);
+                            exit(-1);
                     }
                 }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
             }
             break;
         }
@@ -1240,12 +1273,18 @@ void cpu_step() {
             switch (second_byte & 0x80) {
                 case 0x00: { // MOV.B @ERs+, Rd
                     mov_b_addr_ers_plus_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+                    printf("MOV.B @ERs+, Rd\n");
                     break;
                 }
                 case 0x80: { // MOV.B Rs, @-ERs
                     mov_b_rs_minus_addr_ers(second_byte & 0x0F, (second_byte & 0xF0) >> 4);
+                    printf("MOV.B Rs, @-Ers\n");
                     break;
                 }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
             }
         }
         case 0x20:
@@ -1266,6 +1305,7 @@ void cpu_step() {
         case 0x2F: { // MOV.B @aa:8, Rd
             uint8_t abs = cpu_fetch8(); // 2nd byte
             mov_b_aa8_rd(abs, opcode & 0x0F);
+            printf("MOV.B @aa:8, Rd\n");
             break;
         }
         case 0x6A: {
@@ -1276,6 +1316,7 @@ void cpu_step() {
                     uint8_t fourth_byte = cpu_fetch8();
                     uint16_t abs = (third_byte << 8) | fourth_byte;
                     mov_b_aa16_rd(abs, second_byte & 0x0F);
+                    printf("MOV.B @aa:16, Rd\n");
                     break;
                 }
                 case 0x20: { // MOV.B @aa:24, Rd
@@ -1289,6 +1330,7 @@ void cpu_step() {
                     uint8_t sixth_byte = cpu_fetch8();
                     uint32_t abs = (fourth_byte << 16) | (fifth_byte << 8) | sixth_byte;
                     mov_b_aa24_rd(abs, second_byte & 0x0F);
+                    printf("MOV.B @aa:24, Rd\n");
                     break;
                 }
                 case 0x80: { // MOV.B Rs, @aa:16
@@ -1296,6 +1338,7 @@ void cpu_step() {
                     uint8_t fourth_byte = cpu_fetch8();
                     uint16_t abs = (third_byte << 8) | fourth_byte;
                     mov_b_rs_aa16(second_byte & 0x0F, abs);
+                    printf("MOV.B Rs, @aa:16\n");
                     break;
                 }
                 case 0xA0: { // MOV.B Rs, @aa:24
@@ -1309,6 +1352,7 @@ void cpu_step() {
                     uint8_t sixth_byte = cpu_fetch8();
                     uint32_t abs = (fourth_byte << 16) | (fifth_byte << 8) | sixth_byte;
                     mov_b_rs_aa24(second_byte & 0x0F, abs);
+                    printf("MOV.B Rs, @aa:24\n");
                     break;
                 }
                 default:
@@ -1325,14 +1369,21 @@ void cpu_step() {
                     uint8_t fourth_byte = cpu_fetch8();
                     uint16_t imm = (third_byte << 8) | fourth_byte;
                     mov_w_xx_rd(imm, second_byte & 0x0F);
+                    printf("MOV.W #xx:16, Rd\n");
+                    break;
                 }
                 case  0x10: { // ADD.W #xx:16, Rd
                     uint8_t third_byte = cpu_fetch8();
                     uint8_t fourth_byte = cpu_fetch8();
                     uint16_t imm = (third_byte << 8) | fourth_byte;
                     add_w_xx_rd(imm, second_byte & 0x0F);
+                    printf("ADD.W #xx:16, Rd\n");
                     break;
                 }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
             }
             break;
         }
@@ -1341,12 +1392,18 @@ void cpu_step() {
             switch (second_byte & 0x80) {
                 case 0x00: { // MOV.W @ERs, Rd
                     mov_w_addr_ers_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+                    printf("MOV.W @Ers, Rd\n");
                     break;
                 }
                 case 0x80: { // MOV.W Rs, @ERd
                     mov_w_rs_addr_erd(second_byte & 0x0F, (second_byte & 0xF0) >> 4);
+                    printf("MOV.W Rs, @Erd\n");
                     break;
                 }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
             }
         }
         case 0x6F: {
@@ -1358,12 +1415,18 @@ void cpu_step() {
             switch (second_byte & 0x80) {
                 case 0x00: { // MOV.W @(d:16, Ers), Rd
                     mov_w_disp16_addr_ers_rd(disp, (second_byte & 0xF0) >> 4, second_byte & 0x0F);
+                    printf("MOV.W @(d:16, Ers), Rd\n");
                     break;
                 }
                 case 0x80: { // MOV.W Rs, @(d:16, Erd)
                     mov_w_rs_disp16_addr_erd(second_byte & 0x0F, disp, (second_byte & 0xF0) >> 4);
+                    printf("MOV.W Rs, @(d:16, Erd)\n");
                     break;
                 }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
             }
         }
         case 0x6D: {
@@ -1371,12 +1434,18 @@ void cpu_step() {
             switch (second_byte & 0x80) {
                 case 0x00: { // MOV.W @ERs+, Rd
                     mov_w_addr_ers_plus_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+                    printf("MOV.W @ERs+, Rd\n");
                     break;
                 }
                 case 0x80: { // MOV.W Rs, @-ERd
                     mov_w_rs_minus_addr_erd(second_byte & 0x0F, (second_byte & 0xF0) >> 4);
+                    printf("MOV.W Rs, @-ERd\n");
                     break;
                 }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
             }
         }
         case 0x6B: {
@@ -1387,6 +1456,7 @@ void cpu_step() {
                     uint8_t fourth_byte = cpu_fetch8();
                     uint16_t abs = (third_byte << 8) | fourth_byte;
                     mov_w_aa16_rd(abs, second_byte & 0x0F);
+                    printf("MOV.W @aa:16, Rd\n");
                     break;
                 }
                 case 0x20: { // MOV.W @aa:24, Rd
@@ -1396,6 +1466,7 @@ void cpu_step() {
                     uint8_t sixth_byte = cpu_fetch8();
                     uint32_t abs = (fourth_byte << 16) | (fifth_byte << 8) | sixth_byte;
                     mov_w_aa24_rd(abs, second_byte & 0x0F);
+                    printf("MOV.W @aa:24, Rd\n");
                     break;
                 }
                 case 0x80: { // MOV.W Rs, @aa:16
@@ -1403,6 +1474,7 @@ void cpu_step() {
                     uint8_t fourth_byte = cpu_fetch8();
                     uint16_t abs = (third_byte << 8) | fourth_byte;
                     mov_w_rs_aa16(second_byte & 0x0F, abs);
+                    printf("MOV.W Rs, @aa:16\n");
                     break;
                 }
                 case 0xA0: { // MOV.W Rs, @aa:24
@@ -1412,6 +1484,7 @@ void cpu_step() {
                     uint8_t sixth_byte = cpu_fetch8();
                     uint32_t abs = (fourth_byte << 16) | (fifth_byte << 8) | sixth_byte;
                     mov_w_rs_aa24(second_byte & 0x0F, abs);
+                    printf("MOV.W Rs, @aa:24\n");
                     break;
                 }
                 default:
@@ -1431,12 +1504,18 @@ void cpu_step() {
             switch (second_byte & 0xF0) {
                 case 0x00: { // MOV.L #xx:32, Rd
                     mov_l_xx_rd(imm, second_byte & 0x0F);
+                    printf("MOV.L #xx:32, Rd\n");
                     break;
                 }
                 case 0x10: { // ADD.L #xx:32, ERd
                     add_l_xx_rd(imm, second_byte & 0x0F);
+                    printf("ADD.L #xx:32, ERd\n");
                     break;
                 }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
             }
         }
         case 0x01: {
@@ -1448,10 +1527,12 @@ void cpu_step() {
                     switch (fourth_byte & 0x80) {
                         case 0x00: { // MOV.L @ERs, ERd
                             mov_l_addr_ers_erd((fourth_byte & 0xF0) >> 4, fourth_byte & 0x0F);
+                            printf("MOV.L @ERs, ERd\n");
                             break;
                         }
                         case 0x80: { // MOV.L Ers, @Erd
                             mov_l_ers_addr_erd(fourth_byte & 0x0F, (fourth_byte & 0xF0) >> 4);
+                            printf("MOV.L Ers, @Erd\n");
                             break;
                         }
                     }
@@ -1465,10 +1546,12 @@ void cpu_step() {
                     switch (fourth_byte & 0x80) {
                         case 0x00: { // MOV.L @(d:16, ERs), ERd
                             mov_l_disp16_addr_ers_erd(disp, (fourth_byte & 0xF0) >> 4, fourth_byte & 0x0F);
+                            printf("MOV.L @(d:16, ERs), ERd\n");
                             break;
                         }
                         case 0x80: { // MOV.L ERs, @(d:16, Erd)
                             mov_l_ers_disp16_addr_erd(fourth_byte & 0x0F, disp, (fourth_byte & 0xF0) >> 4);
+                            printf("MOV.L ERs, @(d:16, Erd)\n");
                             break;
                         }
                     }
@@ -1487,12 +1570,18 @@ void cpu_step() {
                     switch (sixth_byte & 0xF0) {
                         case 0x20: { // MOV.L @(d:24, ERs), ERd
                             mov_l_disp24_addr_ers_erd(disp, (fourth_byte & 0xF0) >> 4, sixth_byte & 0x0F);
+                            printf("MOV.L @(d:24, ERs), ERd\n");
                             break;
                         }
                         case 0xA0: { // MOV.L ERs, @(d:24, Erd)
                             mov_l_ers_disp24_addr_erd(sixth_byte & 0x0F, disp, (fourth_byte & 0xF0) >> 4);
+                            printf("MOV.L ERs, @(d:24, Erd)\n");
                             break;
                         }
+                        default:
+                            printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                            printf("Current PC: %06X\n", cpu.pc);
+                            exit(-1);
                     }
                 }
                 case 0x6D: {
@@ -1500,12 +1589,18 @@ void cpu_step() {
                     switch (fourth_byte & 0x80) {
                         case 0x00: { // MOV.L @ERs+, ERd
                             mov_l_addr_ers_plus_erd((fourth_byte & 0xF0) >> 4, fourth_byte & 0x0F);
+                            printf("MOV.L @ERs+, ERd\n");
                             break;
                         }
                         case 0x80: { // MOV.L Ers, @-Erd
                             mov_l_ers_minus_addr_erd(fourth_byte & 0x0F, (fourth_byte & 0xF0) >> 4);
+                            printf("MOV.L Ers, @-Erd\n");
                             break;
                         }
+                        default:
+                            printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                            printf("Current PC: %06X\n", cpu.pc);
+                            exit(-1);
                     }
                 }
                 case 0x6B: {
@@ -1517,6 +1612,7 @@ void cpu_step() {
 
                             uint16_t abs = (fifth_byte << 8) | sixth_byte;
                             mov_l_aa16_erd(abs, fourth_byte & 0x0F);
+                            printf("MOV.L @aa:16, ERd\n");
                             break;
                         }
                         case 0x20: { // MOV.L @aa:24, ERd
@@ -1527,6 +1623,7 @@ void cpu_step() {
 
                             uint32_t abs = (sixth_byte << 16) | (seventh_byte << 8) | eigth_byte;
                             mov_l_aa24_erd(abs, fourth_byte & 0x0F);
+                            printf("MOV.L @aa:24, ERd\n");
                             break;
                         }
                         case 0x80: { // MOV.L Ers, @aa:16
@@ -1535,6 +1632,7 @@ void cpu_step() {
 
                             uint16_t abs = (fifth_byte << 8) | sixth_byte;
                             mov_l_ers_aa16(fourth_byte & 0x0F, abs);
+                            printf("MOV.L Ers, @aa:16\n");
                             break;
                         }
                         case 0xA0: { // MOV.L Ers, @aa:24
@@ -1545,8 +1643,13 @@ void cpu_step() {
 
                             uint32_t abs = (sixth_byte << 16) | (seventh_byte << 8) | eigth_byte;
                             mov_l_ers_aa24(fourth_byte & 0x0F, abs);
+                            printf("MOV.L Ers, @aa:24\n");
                             break;
                         }
+                        default:
+                            printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                            printf("Current PC: %06X\n", cpu.pc);
+                            exit(-1);
                     }
                 }
                 default:
@@ -1574,6 +1677,7 @@ void cpu_step() {
         case 0x3F: { // MOV.B Rs, @aa:8
             uint8_t abs = cpu_fetch8(); // second byte
             mov_b_rs_aa8(opcode & 0x0F, abs);
+            printf("MOV.B Rs, @aa:8\n");
             break;
         }
         default:
