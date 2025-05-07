@@ -24,6 +24,7 @@ int main(int argc, char *argv[]) {
     printf("PC + 1 -> memory: 0x%02X\n", mem_read8(0x2C4 + 1)); // registro
     printf("PC + 2 -> memory: 0x%02X\n", mem_read16(0x2C4 + 2)); // imm or xx
 
+    printf("OPCODE: 0x%02X %02X\n", mem_read8(0x2C8), mem_read8(0x2C9));
     while (true) {
         cpu_step();
         cpu_debug();
