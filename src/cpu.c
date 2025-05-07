@@ -1062,9 +1062,133 @@ static void add_l_rs_erd(uint8_t ers, uint8_t erd) {
     cpu.cycles += 2;
 }
 
+// SUB.B Rs, Rd
+static void sub_b_rs_rd(uint8_t rs, uint8_t rd) {
+    uint8_t a;
+    uint8_t b;
+    uint8_t result;
+
+    if ((rs & 0x8) >> 3) {  // RnL
+        a = rXl(cpu.er[rs & 0x7]);
+    } else {                // RnH
+        a = rXh(cpu.er[rs & 0x7]);
+    }
+
+    if ((rd & 0x8) >> 3) {  // RnL
+        b = rXl(cpu.er[rd & 0x7]);
+        result = b - a;
+        set_rXl(rd & 0x7, result);
+    } else {                // RnH
+        b = rXh(cpu.er[rd & 0x7]);
+        result = b - a;
+        set_rXh(rd & 0x7, result);
+    }
+
+    // set the flags
+    set_H((b & 0x0F) < (a & 0x0F));
+    set_N(result & 0x80);
+    set_Z(result == 0);
+    set_V(((b ^ a) & (b ^ result) & 0x80) != 0);
+    set_C(b < a);
+
+    cpu.cycles += 2;
+}
+
+// SUB.W #xx:16, Rd
+static void sub_w_xx_rd(uint16_t xx, uint8_t rd) {
+    uint16_t a = xx;
+    uint16_t b;
+    uint16_t result;
+
+    if ((rd & 0x8) >> 3) {  // En
+        b = eX(cpu.er[rd & 0x7]);
+        result = b - a;
+        set_eX(rd & 0x7, result);
+    } else {                // Rn
+        b = rX(cpu.er[rd & 0x7]);
+        result = b - a;
+        set_rX(rd & 0x7, result);
+    }
+
+    // set the flags
+    set_H((b & 0x0FFF) < (a & 0x0FFF));
+    set_N(result & 0x8000);
+    set_Z(result == 0);
+    set_V(((b ^ a) & (b ^ result) & 0x8000) != 0);
+    set_C(b < a);
+
+    cpu.cycles += 4;
+}
+
+// SUB.W Rs, Rd
+static void sub_w_rs_rd(uint8_t rs, uint8_t rd) {
+    uint16_t a;
+    uint16_t b;
+    uint16_t result;
+
+    if ((rs & 0x8) >> 3) {  // En
+        a = eX(cpu.er[rs & 0x7]);
+    } else {                // Rn
+        a = rX(cpu.er[rs & 0x7]);
+    }
+
+    if ((rd & 0x8) >> 3) {  // En
+        b = eX(cpu.er[rd & 0x7]);
+        result = b - a;
+        set_eX(rd & 0x7, result);
+    } else {                // Rn
+        b = rX(cpu.er[rd & 0x7]);
+        result = b - a;
+        set_rX(rd & 0x7, result);
+    }
+
+    // set the flags
+    set_H((b & 0x0FFF) < (a & 0x0FFF));
+    set_N(result & 0x8000);
+    set_Z(result == 0);
+    set_V(((b ^ a) & (b ^ result) & 0x8000) != 0);
+    set_C(b < a);
+
+    cpu.cycles += 2;
+}
+
+// SUB.L #xx:32, ERd
+static void sub_l_xx_erd(uint32_t xx, uint8_t erd) {
+    uint32_t a = xx;
+    uint32_t b = cpu.er[erd & 0x7];
+    uint32_t result  = b - a;
+    cpu.er[erd & 0x7] = result;
+
+    // set the flags
+    set_H((b & 0x0FFFFFFF) < (a & 0x0FFFFFFF));
+    set_N(result & 0x80000000);
+    set_Z(result == 0);
+    set_V(((b ^ a) & (b ^ result) & 0x80000000) != 0);
+    set_C(b < a);
+
+    cpu.cycles += 6;
+}
+
+// SUB.L ERs, ERd
+static void sub_l_ers_erd(uint8_t ers, uint8_t erd) {
+    uint32_t a = cpu.er[ers & 0x7];
+    uint32_t b = cpu.er[erd & 0x7];
+    uint32_t result  = b - a;
+    cpu.er[erd & 0x7] = result;
+
+    // set the flags
+    set_H((b & 0x0FFFFFFF) < (a & 0x0FFFFFFF));
+    set_N(result & 0x80000000);
+    set_Z(result == 0);
+    set_V(((b ^ a) & (b ^ result) & 0x80000000) != 0);
+    set_C(b < a);
+
+    cpu.cycles += 2;
+}
+
 uint8_t cpu_fetch8() {
     if (cpu.pc & 1) {
-        printf("*WARNING*: pc is pointing to an odd address! 0x%06X\n", cpu.pc);
+        //printf("*WARNING*: pc is pointing to an odd address! 0x%06X\n", cpu.pc);
     }
     uint8_t data = mem_read8(cpu.pc & 0xFFFF); // normal mode (16 bits)
     cpu.pc += 1;
@@ -1086,6 +1210,33 @@ void cpu_step() {
             nop();
             printf("NOP\n");
             break;
+        }
+        case 0x18: { // SUB.B Rs, Rd
+            uint8_t second_byte = cpu_fetch8();
+            sub_b_rs_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("SUB.B Rs, Rd\n");
+            break;
+        }
+        case 0x19: { // SUB.W Rs, Rd
+            uint8_t second_byte = cpu_fetch8();
+            sub_w_rs_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("SUB.W Rs, Rd\n");
+            break;
+        }
+        case 0x1A: {
+            uint8_t second_byte = cpu_fetch8();
+            switch (second_byte & 0x80) {
+                case 0x00: {}
+                case 0x80: { // SUB.L ERs, ERd
+                    sub_l_ers_erd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+                    printf("SUB.L ERs, ERd\n");
+                    break;
+                }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
+            }
         }
         case 0x08: { // ADD.B Rs, Rd
             uint8_t second_byte = cpu_fetch8();
@@ -1380,6 +1531,14 @@ void cpu_step() {
                     printf("ADD.W #xx:16, Rd\n");
                     break;
                 }
+                case 0x30: { // SUB.W #xx:16, Rd
+                    uint8_t third_byte = cpu_fetch8();
+                    uint8_t fourth_byte = cpu_fetch8();
+                    uint16_t imm = (third_byte << 8) | fourth_byte;
+                    sub_w_xx_rd(imm, second_byte & 0x0F);
+                    printf("SUB.W #xx:16, Rd\n");
+                    break;
+                }
                 default:
                     printf("Error: opcode not implemented: 0x%02X\n", opcode);
                     printf("Current PC: %06X\n", cpu.pc);
@@ -1510,6 +1669,11 @@ void cpu_step() {
                 case 0x10: { // ADD.L #xx:32, ERd
                     add_l_xx_rd(imm, second_byte & 0x0F);
                     printf("ADD.L #xx:32, ERd\n");
+                    break;
+                }
+                case 0x30: { // SUB.L #xx:32, ERd
+                    sub_l_xx_erd(imm, second_byte & 0x0F);
+                    printf("SUB.L #xx:32, ERd\n");
                     break;
                 }
                 default:
