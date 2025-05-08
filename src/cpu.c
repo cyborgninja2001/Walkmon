@@ -1186,6 +1186,24 @@ static void sub_l_ers_erd(uint8_t ers, uint8_t erd) {
     cpu.cycles += 2;
 }
 
+// SUBS #1, ERd
+static void subs_1_erd(uint8_t erd) {
+    cpu.er[erd & 0x7] -= 1;
+    cpu.cycles += 2;
+}
+
+// SUBS #2, ERd
+static void subs_2_erd(uint8_t erd) {
+    cpu.er[erd & 0x7] -= 2;
+    cpu.cycles += 2;
+}
+
+// SUBS #4, ERd
+static void subs_4_erd(uint8_t erd) {
+    cpu.er[erd & 0x7] -= 4;
+    cpu.cycles += 2;
+}
+
 uint8_t cpu_fetch8() {
     if (cpu.pc & 1) {
         //printf("*WARNING*: pc is pointing to an odd address! 0x%06X\n", cpu.pc);
@@ -1209,6 +1227,31 @@ void cpu_step() {
         case 0x00: { // NOP
             nop();
             printf("NOP\n");
+            break;
+        }
+        case 0x1B: {
+            uint8_t second_byte = cpu_fetch8();
+            switch (second_byte & 0xF0) {
+                case 0x00: { // SUBS #1, ERd
+                    subs_1_erd(second_byte & 0x0F);
+                    printf("SUBS #1, ERd\n");
+                    break;
+                }
+                case 0x80: { // SUBS #2, ERd
+                    subs_2_erd(second_byte & 0x0F);
+                    printf("SUBS #2, ERd\n");
+                    break;
+                }
+                case 0x90: { // SUBS #4, ERd
+                    subs_4_erd(second_byte & 0x0F);
+                    printf("SUBS #4, ERd\n");
+                    break;
+                }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
+            }
             break;
         }
         case 0x18: { // SUB.B Rs, Rd
@@ -1237,6 +1280,7 @@ void cpu_step() {
                     printf("Current PC: %06X\n", cpu.pc);
                     exit(-1);
             }
+            break;
         }
         case 0x08: { // ADD.B Rs, Rd
             uint8_t second_byte = cpu_fetch8();
@@ -1334,6 +1378,7 @@ void cpu_step() {
                     printf("Current PC: %06X\n", cpu.pc);
                     exit(-1);
             }
+            break;
         }
         case 0x6E: {
             uint8_t second_byte = cpu_fetch8();
@@ -1355,6 +1400,7 @@ void cpu_step() {
                     printf("Current PC: %06X\n", cpu.pc);
                     exit(-1);
             }
+            break;
         }
         case 0x78: {
             uint8_t second_byte = cpu_fetch8();
@@ -1387,6 +1433,7 @@ void cpu_step() {
                             printf("Current PC: %06X\n", cpu.pc);
                             exit(-1);
                     }
+                    break;
                 }
                 case 0x6B: {
                     //disp
@@ -1411,6 +1458,7 @@ void cpu_step() {
                             printf("Current PC: %06X\n", cpu.pc);
                             exit(-1);
                     }
+                    break;
                 }
                 default:
                     printf("Error: opcode not implemented: 0x%02X\n", opcode);
@@ -1437,6 +1485,7 @@ void cpu_step() {
                     printf("Current PC: %06X\n", cpu.pc);
                     exit(-1);
             }
+            break;
         }
         case 0x20:
         case 0x21:
@@ -1511,6 +1560,7 @@ void cpu_step() {
                     printf("Current PC: %06X\n", cpu.pc);
                     exit(-1);
             }
+            break;
         }
         case 0x79: {
             uint8_t second_byte = cpu_fetch8();
@@ -1564,6 +1614,7 @@ void cpu_step() {
                     printf("Current PC: %06X\n", cpu.pc);
                     exit(-1);
             }
+            break;
         }
         case 0x6F: {
             uint8_t second_byte = cpu_fetch8();
@@ -1587,6 +1638,7 @@ void cpu_step() {
                     printf("Current PC: %06X\n", cpu.pc);
                     exit(-1);
             }
+            break;
         }
         case 0x6D: {
             uint8_t second_byte = cpu_fetch8();
@@ -1606,6 +1658,7 @@ void cpu_step() {
                     printf("Current PC: %06X\n", cpu.pc);
                     exit(-1);
             }
+            break;
         }
         case 0x6B: {
             uint8_t second_byte = cpu_fetch8();
@@ -1651,6 +1704,7 @@ void cpu_step() {
                     printf("Current PC: %06X\n", cpu.pc);
                     exit(-1);
             }
+            break;
         }
         case 0x7A: {
             uint8_t second_byte = cpu_fetch8();
@@ -1681,6 +1735,7 @@ void cpu_step() {
                     printf("Current PC: %06X\n", cpu.pc);
                     exit(-1);
             }
+            break;
         }
         case 0x01: {
             uint8_t second_byte = cpu_fetch8(); // should be 0
@@ -1700,6 +1755,7 @@ void cpu_step() {
                             break;
                         }
                     }
+                    break;
                 }
                 case 0x6F: {
                     uint8_t fourth_byte = cpu_fetch8();
@@ -1747,6 +1803,7 @@ void cpu_step() {
                             printf("Current PC: %06X\n", cpu.pc);
                             exit(-1);
                     }
+                    break;
                 }
                 case 0x6D: {
                     uint8_t fourth_byte = cpu_fetch8();
@@ -1766,6 +1823,7 @@ void cpu_step() {
                             printf("Current PC: %06X\n", cpu.pc);
                             exit(-1);
                     }
+                    break;
                 }
                 case 0x6B: {
                     uint8_t fourth_byte = cpu_fetch8();
@@ -1815,6 +1873,7 @@ void cpu_step() {
                             printf("Current PC: %06X\n", cpu.pc);
                             exit(-1);
                     }
+                    break;
                 }
                 default:
                     printf("Error: opcode not implemented: ****\n");
