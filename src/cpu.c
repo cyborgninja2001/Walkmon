@@ -1204,6 +1204,43 @@ static void subs_4_erd(uint8_t erd) {
     cpu.cycles += 2;
 }
 
+// (Jump to Subroutine)
+// JSR @ERn
+static void jsr_addr_ern(uint8_t ern) {
+    // MOV.W Rs, @-ERd = PUSH.W (PC & 0xFFFF)
+    cpu.er[0x7] -= 2; // SP -= 2
+    uint32_t sp_address = cpu.er[0x7] & 0x00FFFFFF; // only 24 bits
+    uint16_t value = cpu.pc & 0xFFFF; // in normal mode only save 16 bits
+    mem_write16(sp_address, value);
+    cpu.pc = cpu.er[ern & 0x7] & 0x00FFFFFF; // only 24 bits (*CHECK*)
+    cpu.cycles += 6;
+}
+
+// JSR @aa:24
+static void jsr_aa24(uint32_t aa) {
+    cpu.er[0x7] -= 2; // SP -= 2
+    uint32_t sp_address = cpu.er[0x7] & 0x00FFFFFF; // only 24 bits
+    uint16_t value = cpu.pc & 0xFFFF; // in normal mode only save 16 bits
+    mem_write16(sp_address, value);
+    cpu.pc = aa;
+    cpu.cycles += 8;
+}
+
+// JSR @@aa:8 (****CHECK****)
+static void jsr_aa8(uint8_t aa) {
+    cpu.er[0x7] -= 2; // SP -= 2
+    uint32_t sp_address = cpu.er[0x7] & 0x00FFFFFF; // only 24 bits
+    uint16_t value = cpu.pc & 0xFFFF; // in normal mode only save 16 bits
+    mem_write16(sp_address, value);
+
+    uint16_t address = mem_read16(aa);
+    cpu.pc = address;
+    cpu.cycles += 8;
+}
+
+// PUSH.W Rn
+static void push_w_rn(uint8_t rn) {}
+
 uint8_t cpu_fetch8() {
     if (cpu.pc & 1) {
         //printf("*WARNING*: pc is pointing to an odd address! 0x%06X\n", cpu.pc);
@@ -1227,6 +1264,27 @@ void cpu_step() {
         case 0x00: { // NOP
             nop();
             printf("NOP\n");
+            break;
+        }
+        case 0x5D: { // JSR @ERn
+            uint8_t second_byte = cpu_fetch8();
+            jsr_addr_ern((second_byte & 0xF0) >> 4);
+            printf("JSR @ERn\n");
+            break;
+        }
+        case 0x5E: { // JSR @aa:24
+            uint8_t second_byte = cpu_fetch8();
+            uint8_t third_byte = cpu_fetch8();
+            uint8_t fourth_byte = cpu_fetch8();
+            uint32_t abs = (second_byte << 16) | (third_byte << 8) | fourth_byte;
+            jsr_aa24(abs);
+            printf("JSR @aa:24\n");
+            break;
+        }
+        case 0x5F: { // JSR @@aa:8
+            uint8_t abs = cpu_fetch8();
+            jsr_aa8(abs);
+            printf("JSR @aa:8\n");
             break;
         }
         case 0x1B: {
