@@ -1650,6 +1650,14 @@ static void adds_4_erd(uint8_t erd) {
     cpu.cycles += 2;
 }
 
+// RTS (ReTurn from Subroutine)
+static void rts() { // *CHECK*
+    uint16_t value = mem_read16(cpu.er[0x7]);
+    cpu.er[0x7] += 2;
+    cpu.pc = value;
+    cpu.cycles += 8;
+}
+
 uint8_t cpu_fetch8() {
     if (cpu.pc & 1) {
         //printf("*WARNING*: pc is pointing to an odd address! 0x%06X\n", cpu.pc);
@@ -1691,6 +1699,21 @@ void cpu_step() {
                 case 0x90: { // ADDS #4, ERd
                     adds_4_erd(second_byte & 0x0F);
                     printf("ADDS #4, ERd\n");
+                    break;
+                }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
+            }
+            break;
+        }
+        case 0x54: {
+            uint8_t second_byte = cpu_fetch8();
+            switch(second_byte) {
+                case 0x70: { // RTS (ReTurn from Subroutine)
+                    rts();
+                    printf("RTS (ReTurn from Subroutine)\n");
                     break;
                 }
                 default:
@@ -2652,4 +2675,5 @@ void cpu_debug() {
     printf("I:%d UI:%d H:%d U:%d N:%d Z:%d V:%d C:%d \n",
           I(cpu.ccr), UI(cpu.ccr), H(cpu.ccr), U(cpu.ccr),
           N(cpu.ccr), Z(cpu.ccr), V(cpu.ccr), C(cpu.ccr));
+    printf("cpu cycles: %ld\n", cpu.cycles);
 }
