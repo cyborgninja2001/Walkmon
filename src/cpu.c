@@ -1632,6 +1632,24 @@ static void cmp_l_ers_erd(uint8_t ers, uint8_t erd) {
     cpu.cycles += 2;
 }
 
+// ADDS #1, ERd
+static void adds_1_erd(uint8_t erd) {
+    cpu.er[erd & 0x7] += 1;
+    cpu.cycles += 2;
+}
+
+// ADDS #2, ERd
+static void adds_2_erd(uint8_t erd) {
+    cpu.er[erd & 0x7] += 2;
+    cpu.cycles += 2;
+}
+
+// ADDS #4, ERd
+static void adds_4_erd(uint8_t erd) {
+    cpu.er[erd & 0x7] += 4;
+    cpu.cycles += 2;
+}
+
 uint8_t cpu_fetch8() {
     if (cpu.pc & 1) {
         //printf("*WARNING*: pc is pointing to an odd address! 0x%06X\n", cpu.pc);
@@ -1655,6 +1673,31 @@ void cpu_step() {
         case 0x00: { // NOP
             nop();
             printf("NOP\n");
+            break;
+        }
+        case 0x0B: {
+            uint8_t second_byte = cpu_fetch8();
+            switch(opcode & 0xF0) {
+                case 0x00: { // ADDS #1, ERd
+                    adds_1_erd(second_byte & 0x0F);
+                    printf("ADDS #1, ERd\n");
+                    break;
+                }
+                case 0x80: { // ADDS #2, ERd
+                    adds_2_erd(second_byte & 0x0F);
+                    printf("ADDS #2, ERd\n");
+                    break;
+                }
+                case 0x90: { // ADDS #4, ERd
+                    adds_4_erd(second_byte & 0x0F);
+                    printf("ADDS #4, ERd\n");
+                    break;
+                }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
+            }
             break;
         }
         case 0xA0:
@@ -1788,6 +1831,10 @@ void cpu_step() {
                     printf("BLE d:16\n");
                     break;
                 }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
             }
             break;
         }
