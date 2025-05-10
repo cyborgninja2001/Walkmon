@@ -1496,6 +1496,58 @@ static void ble16(uint16_t disp) {
     cpu.cycles += 6;
 }
 
+// CMP.B #xx:8, Rd
+static void cmp_b_xx8_rd(uint8_t xx, uint8_t rd) {
+    uint8_t a;
+    uint8_t b = xx;
+    uint8_t result;
+
+    if ((rd & 0x8) >> 3) {  // RnL
+        a = rXl(cpu.er[rd & 0x7]);
+    } else {                // RnH
+        a = rXh(cpu.er[rd & 0x7]);
+    }
+    result = a - b;
+
+    // set the flags
+    set_H((a & 0x0F) < (b & 0x0F));
+    set_N(result & 0x80);
+    set_Z(result == 0);
+    set_V(((a ^ b) & (a ^ result) & 0x80) != 0);
+    set_C(a < b);
+
+    cpu.cycles += 2;
+}
+
+// CMP.B Rs, Rd
+static void cmp_b_rs_rd(uint8_t rs, uint8_t rd) {
+    uint8_t a;
+    uint8_t b;
+    uint8_t result;
+
+    if ((rd & 0x8) >> 3) {  // RnL
+        a = rXl(cpu.er[rd & 0x7]);
+    } else {                // RnH
+        a = rXh(cpu.er[rd & 0x7]);
+    }
+
+    if ((rs & 0x8) >> 3) {  // RnL
+        b = rXl(cpu.er[rs & 0x7]);
+    } else {                // RnH
+        b = rXh(cpu.er[rs & 0x7]);
+    }
+    result = a - b;
+
+    // set the flags
+    set_H((a & 0x0F) < (b & 0x0F));
+    set_N(result & 0x80);
+    set_Z(result == 0);
+    set_V(((a ^ b) & (a ^ result) & 0x80) != 0);
+    set_C(a < b);
+
+    cpu.cycles += 2;
+}
+
 uint8_t cpu_fetch8() {
     if (cpu.pc & 1) {
         //printf("*WARNING*: pc is pointing to an odd address! 0x%06X\n", cpu.pc);
@@ -1519,6 +1571,33 @@ void cpu_step() {
         case 0x00: { // NOP
             nop();
             printf("NOP\n");
+            break;
+        }
+        case 0xA0:
+        case 0xA1:
+        case 0xA2:
+        case 0xA3:
+        case 0xA4:
+        case 0xA5:
+        case 0xA6:
+        case 0xA7:
+        case 0xA8:
+        case 0xA9:
+        case 0xAA:
+        case 0xAB:
+        case 0xAC:
+        case 0xAD:
+        case 0xAE:
+        case 0xAF: { // CMP.B #xx:8, Rd
+            uint8_t imm = cpu_fetch8();
+            cmp_b_xx8_rd(imm, opcode & 0x0F);
+            printf("CMP.B #xx:8, Rd\n");
+            break;
+        }
+        case 0x1C: { // CMP.B Rs, Rd
+            uint8_t second_byte = cpu_fetch8();
+            cmp_b_rs_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("CMP.B Rs, Rd\n");
             break;
         }
         case 0x40: { // BRA (BT) d:8
