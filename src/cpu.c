@@ -1548,6 +1548,90 @@ static void cmp_b_rs_rd(uint8_t rs, uint8_t rd) {
     cpu.cycles += 2;
 }
 
+// CMP.W #xx:16, Rd
+static void cmp_w_xx16_rd(uint16_t xx, uint8_t rd) {
+    uint16_t a;
+    uint16_t b = xx;
+    uint16_t result;
+
+    if ((rd & 0x8) >> 3) { // En
+        a = eX(cpu.er[rd & 0x7]);
+    } else {               // Rn
+        a = rX(cpu.er[rd & 0x7]);
+    }
+    result = a - b;
+
+    // set the flags
+    set_H((a & 0x0FFF) < (b & 0x0FFF));
+    set_N(result & 0x8000);
+    set_Z(result == 0);
+    set_V(((a ^ b) & (a ^ result) & 0x8000) != 0);
+    set_C(a < b);
+
+    cpu.cycles += 4;
+}
+
+// CMP.W Rs, Rd
+static void cmp_w_rs_rd(uint8_t rs, uint8_t rd) {
+    uint16_t a;
+    uint16_t b;
+    uint16_t result;
+
+    if ((rd & 0x8) >> 3) { // En
+        a = eX(cpu.er[rd & 0x7]);
+    } else {               // Rn
+        a = rX(cpu.er[rd & 0x7]);
+    }
+
+    if ((rs & 0x8) >> 3) { // En
+        b = eX(cpu.er[rs & 0x7]);
+    } else {               // Rn
+        b = rX(cpu.er[rs & 0x7]);
+    }
+    result = a - b;
+
+    // set the flags
+    set_H((a & 0x0FFF) < (b & 0x0FFF));
+    set_N(result & 0x8000);
+    set_Z(result == 0);
+    set_V(((a ^ b) & (a ^ result) & 0x8000) != 0);
+    set_C(a < b);
+
+    cpu.cycles += 2;
+}
+
+// CMP.L #xx:32, ERd
+static void cmp_l_xx32_erd(uint32_t xx, uint8_t erd) {
+    uint32_t a = cpu.er[erd & 0x7];
+    uint32_t b = xx;
+    uint32_t result = a - b;
+
+    // set the flags
+    set_H((a & 0x0FFFFFFF) < (b & 0x0FFFFFFF));
+    set_N(result & 0x80000000);
+    set_Z(result == 0);
+    set_V(((a ^ b) & (a ^ result) & 0x80000000) != 0);
+    set_C(a < b);
+
+    cpu.cycles += 6;
+}
+
+// CMP.L ERs, ERd
+static void cmp_l_ers_erd(uint8_t ers, uint8_t erd) {
+    uint32_t a = cpu.er[erd & 0x7];
+    uint32_t b = cpu.er[ers & 0x7];
+    uint32_t result = a - b;
+
+    // set the flags
+    set_H((a & 0x0FFFFFFF) < (b & 0x0FFFFFFF));
+    set_N(result & 0x80000000);
+    set_Z(result == 0);
+    set_V(((a ^ b) & (a ^ result) & 0x80000000) != 0);
+    set_C(a < b);
+
+    cpu.cycles += 2;
+}
+
 uint8_t cpu_fetch8() {
     if (cpu.pc & 1) {
         //printf("*WARNING*: pc is pointing to an odd address! 0x%06X\n", cpu.pc);
@@ -1598,6 +1682,18 @@ void cpu_step() {
             uint8_t second_byte = cpu_fetch8();
             cmp_b_rs_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
             printf("CMP.B Rs, Rd\n");
+            break;
+        }
+        case 0x1D: { // CMP.W Rs, Rd
+            uint8_t second_byte = cpu_fetch8();
+            cmp_w_rs_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("CMP.W Rs, Rd\n");
+            break;
+        }
+        case 0x1F: { // CMP.L ERs, ERd
+            uint8_t second_byte = cpu_fetch8();
+            cmp_l_ers_erd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("CMP.L ERs, ERd\n");
             break;
         }
         case 0x40: { // BRA (BT) d:8
@@ -2158,6 +2254,14 @@ void cpu_step() {
                     printf("ADD.W #xx:16, Rd\n");
                     break;
                 }
+                case 0x20: { // CMP.W #xx:16, Rd
+                    uint8_t third_byte = cpu_fetch8();
+                    uint8_t fourth_byte = cpu_fetch8();
+                    uint16_t imm = (third_byte << 8) | fourth_byte;
+                    cmp_w_xx16_rd(imm, second_byte & 0x0F);
+                    printf("CMP.W #xx:16, Rd\n");
+                    break;
+                }
                 case 0x30: { // SUB.W #xx:16, Rd
                     uint8_t third_byte = cpu_fetch8();
                     uint8_t fourth_byte = cpu_fetch8();
@@ -2300,6 +2404,11 @@ void cpu_step() {
                 case 0x10: { // ADD.L #xx:32, ERd
                     add_l_xx_rd(imm, second_byte & 0x0F);
                     printf("ADD.L #xx:32, ERd\n");
+                    break;
+                }
+                case 0x20: { // CMP.L #xx:32, ERd
+                    cmp_l_xx32_erd(imm, second_byte & 0x0F);
+                    printf("CMP.L #xx:32, ERd\n");
                     break;
                 }
                 case 0x30: { // SUB.L #xx:32, ERd
