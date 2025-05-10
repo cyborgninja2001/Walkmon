@@ -1238,8 +1238,263 @@ static void jsr_aa8(uint8_t aa) {
     cpu.cycles += 8;
 }
 
-// PUSH.W Rn
-static void push_w_rn(uint8_t rn) {}
+//Bcc:
+
+// BRA (BT) d:8
+static void bra8(uint8_t disp) {
+    // condition always true
+    cpu.pc += (int8_t)disp;
+    cpu.cycles += 4;
+}
+
+// BRA (BT) d:16
+static void bra16(uint16_t disp) {
+    // condition always true
+    cpu.pc += (int16_t)disp;
+    cpu.cycles += 6;
+}
+
+// BRN (BF) d:8
+static void brn8(uint8_t disp) {
+    // condition always false
+    if (false) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// BRN (BF) d:16
+static void brn16(uint16_t disp) {
+    // condition always false
+    if (false) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
+
+// BHI d:8
+static void bhi8(uint8_t disp) {
+    if ((C(cpu.ccr) | Z(cpu.ccr)) == 0) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// BHI d:16
+static void bhi16(uint16_t disp) {
+    if ((C(cpu.ccr) | Z(cpu.ccr)) == 0) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
+
+// BLS d:8
+static void bls8(uint8_t disp) {
+    if ((C(cpu.ccr) | Z(cpu.ccr)) == 1) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// BLS d:16
+static void bls16(uint16_t disp) {
+    if ((C(cpu.ccr) | Z(cpu.ccr)) == 1) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
+
+// Bcc (BHS) d:8
+static void bcc_bhs8(uint8_t disp) {
+    if (C(cpu.ccr) == 0) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// Bcc (BHS) d:16
+static void bcc_bhs16(uint16_t disp) {
+    if (C(cpu.ccr) == 0) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
+
+// BCS (BLO) d:8
+static void bcs_blo8(uint8_t disp) {
+    if (C(cpu.ccr) == 1) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// BCS (BLO) d:16
+static void bcs_blo16(uint16_t disp) {
+    if (C(cpu.ccr) == 1) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
+
+// BNE d:8
+static void bne8(uint8_t disp) {
+    if (Z(cpu.ccr) == 0) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// BNE d:16
+static void bne16(uint16_t disp) {
+    if (Z(cpu.ccr) == 0) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
+
+// BEQ d:8
+static void beq8(uint8_t disp) {
+    if (Z(cpu.ccr) == 1) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// BEQ d:16
+static void beq16(uint16_t disp) {
+    if (Z(cpu.ccr) == 1) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
+
+// BVC d:8
+static void bvc8(uint8_t disp) {
+    if (V(cpu.ccr) == 0) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// BVC d:16
+static void bvc16(uint16_t disp) {
+    if (V(cpu.ccr) == 0) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
+
+// BVS d:8
+static void bvs8(uint8_t disp) {
+    if (V(cpu.ccr) == 1) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// BVS d:16
+static void bvs16(uint16_t disp) {
+    if (V(cpu.ccr) == 1) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
+
+// BPL d:8
+static void bpl8(uint8_t disp) {
+    if (N(cpu.ccr) == 0) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// BPL d:16
+static void bpl16(uint16_t disp) {
+    if (N(cpu.ccr) == 0) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
+
+// BMI d:8
+static void bmi8(uint8_t disp) {
+    if (N(cpu.ccr) == 1) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// BMI d:16
+static void bmi16(uint8_t disp) {
+    if (N(cpu.ccr) == 1) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
+
+// BGE d:8
+static void bge8(uint8_t disp) {
+    if ((N(cpu.ccr) ^ V(cpu.ccr)) == 0) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// BGE d:16
+static void bge16(uint16_t disp) {
+    if ((N(cpu.ccr) ^ V(cpu.ccr)) == 0) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
+
+// BLT d:8
+static void blt8(uint8_t disp) {
+    if ((N(cpu.ccr) ^ V(cpu.ccr)) == 1) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// BLT d:16
+static void blt16(uint8_t disp) {
+    if ((N(cpu.ccr) ^ V(cpu.ccr)) == 1) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
+
+// BGT d:8
+static void bgt8(uint8_t disp) {
+    if ((Z(cpu.ccr) | (N(cpu.ccr) ^ V(cpu.ccr))) == 0) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// BGT d:16
+static void bgt16(uint16_t disp) {
+    if ((Z(cpu.ccr) | (N(cpu.ccr) ^ V(cpu.ccr))) == 0) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
+
+// BLE d:8
+static void ble8(uint8_t disp) {
+    if ((Z(cpu.ccr) | (N(cpu.ccr) ^ V(cpu.ccr))) == 1) {
+        cpu.pc += (int8_t)disp;
+    }
+    cpu.cycles += 4;
+}
+
+// BLE d:16
+static void ble16(uint16_t disp) {
+    if ((Z(cpu.ccr) | (N(cpu.ccr) ^ V(cpu.ccr))) == 1) {
+        cpu.pc += (int16_t)disp;
+    }
+    cpu.cycles += 6;
+}
 
 uint8_t cpu_fetch8() {
     if (cpu.pc & 1) {
@@ -1264,6 +1519,191 @@ void cpu_step() {
         case 0x00: { // NOP
             nop();
             printf("NOP\n");
+            break;
+        }
+        case 0x40: { // BRA (BT) d:8
+            uint8_t disp = cpu_fetch8();
+            bra8(disp);
+            printf("BRA (BT) d:8\n");
+            break;
+        }
+        case 0x58: {
+            uint8_t second_byte = cpu_fetch8();
+            uint8_t third_byte = cpu_fetch8();
+            uint8_t fourth_byte = cpu_fetch8();
+            uint16_t disp = (third_byte << 8) | fourth_byte;
+            switch(second_byte) {
+                case 0x00: { // BRA (BT) d:16
+                    bra16(disp);
+                    printf("BRA (BT) d:16\n");
+                    break;
+                }
+                case 0x10: { // BRN (BF) d:16
+                    brn16(disp);
+                    printf("BRN (BF) d:16\n");
+                    break;
+                }
+                case 0x20: { // BHI d:16
+                    bhi16(disp);
+                    printf("BHI d:16\n");
+                    break;
+                }
+                case 0x30: { // BLS d:16
+                    bls16(disp);
+                    printf("BLS d:16\n");
+                    break;
+                }
+                case 0x40: { // Bcc (BHS) d:16
+                    bcc_bhs16(disp);
+                    printf("Bcc (BHS) d:16\n");
+                    break;
+                }
+                case 0x50: { // BCS (BLO) d:16
+                    bcs_blo16(disp);
+                    printf("BCS (BLO) d:16\n");
+                    break;
+                }
+                case 0x60: { // BNE d:16
+                    bne16(disp);
+                    printf("BNE d:16\n");
+                    break;
+                }
+                case 0x70: { // BEQ d:16
+                    beq16(disp);
+                    printf("BEQ d:16\n");
+                    break;
+                }
+                case 0x80: { // BVC d:16
+                    bvc16(disp);
+                    printf("BVC d:16\n");
+                    break;
+                }
+                case 0x90: { // BVS d:16
+                    bvs16(disp);
+                    printf("BVS d:16\n");
+                    break;
+                }
+                case 0xA0: { // BPL d:16
+                    bpl16(disp);
+                    printf("BPL d:16\n");
+                    break;
+                }
+                case 0xB0: { // BMI d:16
+                    bmi16(disp);
+                    printf("BMI d:16\n");
+                    break;
+                }
+                case 0xC0: { // BGE d:16
+                    bge16(disp);
+                    printf("BGE d:16\n");
+                    break;
+                }
+                case 0xD0: { // BLT d:16
+                    blt16(disp);
+                    printf("BLT d:16\n");
+                    break;
+                }
+                case 0xE0: { // BGT d:16
+                    bgt16(disp);
+                    printf("BGT d:16\n");
+                    break;
+                }
+                case 0xF0: { // BLE d:16
+                    ble16(disp);
+                    printf("BLE d:16\n");
+                    break;
+                }
+            }
+            break;
+        }
+        case 0x41: { // BRN (BF) d:8
+            uint8_t disp = cpu_fetch8();
+            brn8(disp);
+            printf("BRN (BF) d:8\n");
+            break;
+        }
+        case 0x42: { // BHI d:8
+            uint8_t disp = cpu_fetch8();
+            bhi8(disp);
+            printf("BHI d:8\n");
+            break;
+        }
+        case 0x43: { // BLS d:8
+            uint8_t disp = cpu_fetch8();
+            bls8(disp);
+            printf("BLS d:8\n");
+            break;
+        }
+        case 0x44: { // Bcc (BHS) d:8
+            uint8_t disp = cpu_fetch8();
+            bcc_bhs8(disp);
+            printf("Bcc (BHS) d:8\n");
+            break;
+        }
+        case 0x45: { // BCS (BLO) d:8
+            uint8_t disp = cpu_fetch8();
+            bcs_blo8(disp);
+            printf("BCS (BLO) d:8\n");
+            break;
+        }
+        case 0x46: { // BNE d:8
+            uint8_t disp = cpu_fetch8();
+            bne8(disp);
+            printf("BNE d:8\n");
+            break;
+        }
+        case 0x47: { // BEQ d:8
+            uint8_t disp = cpu_fetch8();
+            beq8(disp);
+            printf("BEQ d:8\n");
+            break;
+        }
+        case 0x48: { // BVC d:8
+            uint8_t disp = cpu_fetch8();
+            bvc8(disp);
+            printf("BVC d:8\n");
+            break;
+        }
+        case 0x49: { // BVS d:8
+            uint8_t disp =cpu_fetch8();
+            bvs8(disp);
+            printf("BVS d:8\n");
+            break;
+        }
+        case 0x4A: { // BPL d:8
+            uint8_t disp = cpu_fetch8();
+            bpl8(disp);
+            printf("BPL d:8\n");
+            break;
+        }
+        case 0x4B: { // BMI d:8
+            uint8_t disp = cpu_fetch8();
+            bmi8(disp);
+            printf("BMI d:8\n");
+            break;
+        }
+        case 0x4C: { // BGE d:8
+            uint8_t disp = cpu_fetch8();
+            bge8(disp);
+            printf("BGE d:8\n");
+            break;
+        }
+        case 0x4D: { // BLT d:8
+            uint8_t disp = cpu_fetch8();
+            blt8(disp);
+            printf("BLT d:8\n");
+            break;
+        }
+        case 0x4E: { // BGT d:8
+            uint8_t disp = cpu_fetch8();
+            bgt8(disp);
+            printf("BGT d:8\n");
+            break;
+        }
+        case 0x4F: { // BLE d:8
+            uint8_t disp = cpu_fetch8();
+            ble8(disp);
+            printf("BLE d:8\n");
             break;
         }
         case 0x5D: { // JSR @ERn
