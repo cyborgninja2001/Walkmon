@@ -1658,10 +1658,102 @@ static void rts() { // *CHECK*
     cpu.cycles += 8;
 }
 
-uint8_t cpu_fetch8() {
-    if (cpu.pc & 1) {
-        //printf("*WARNING*: pc is pointing to an odd address! 0x%06X\n", cpu.pc);
+// BSET #xx:3, Rd
+static void bset_xx3_rd(uint8_t xx, uint8_t rd) {
+    uint8_t bit = 1 << (xx & 0x07);
+
+    if ((rd & 0x8) >> 3) { // RnL
+        uint8_t val = rXl(cpu.er[rd & 0x7]);
+        val |= bit;
+        set_rXl(rd & 0x7, val);
+    } else {               // RnH
+        uint8_t val = rXh(cpu.er[rd & 0x7]);
+        val |= bit;
+        set_rXh(rd & 0x7, val);
     }
+
+    cpu.cycles += 2;
+}
+
+// BSET #xx:3, @ERd
+static void bset_xx3_addr_erd(uint8_t xx, uint8_t erd) {
+    uint8_t value = mem_read8(cpu.er[erd & 0x7]);
+    uint8_t bit = 1 << (xx & 0x07);
+    value |= bit;
+    mem_write8(cpu.er[erd & 0x7], value);
+    cpu.cycles += 8;
+}
+
+// BSET #xx:3, @aa:8
+static void bset_xx3_aa8(uint8_t xx, uint8_t aa) {
+    uint8_t value = mem_read8(aa);
+    uint8_t bit = 1 << (xx & 0x07);
+    value |= bit;
+    mem_write8(aa, value);
+    cpu.cycles += 8;
+}
+
+// BSET Rn, Rd
+static void bset_rn_rd(uint8_t rn, uint8_t rd) {
+    uint8_t n;
+
+    if ((rn & 0x8) >> 3) { // RnL
+        n = rXl(cpu.er[rn & 0x7]);
+    } else {               // RnH
+        n = rXh(cpu.er[rn & 0x7]);
+    }
+
+    uint8_t bit = 1 << (n & 0x07);
+    uint8_t value;
+
+    if ((rd & 0x8) >> 3) { // RnL
+        value = rXl(cpu.er[rd & 0x7]);
+        value |= bit;
+        set_rXl(rd & 0x7, value);
+    } else {               // RnH
+        value = rXh(cpu.er[rd & 0x7]);
+        value |= bit;
+        set_rXh(rd & 0x7, value);
+    }
+
+    cpu.cycles += 2;
+}
+
+// BSET Rn, @ERd
+static void bset_rn_addr_erd(uint8_t rn, uint8_t erd) {
+    uint8_t n;
+
+    if ((rn & 0x8) >> 3) { // RnL
+        n = rXl(cpu.er[rn & 0x7]);
+    } else {               // RnH
+        n = rXh(cpu.er[rn & 0x7]);
+    }
+
+    uint8_t bit = 1 << (n & 0x07);
+    uint8_t value = mem_read8(cpu.er[erd & 0x7]);
+    value |= bit;
+    mem_write8(cpu.er[erd & 0x7], value);
+    cpu.cycles += 8;
+}
+
+// BSET Rn, @aa:8
+static void bset_rn_aa8(uint8_t rn, uint8_t aa) {
+    uint8_t n;
+
+    if ((rn & 0x8) >> 3) { // RnL
+        n = rXl(cpu.er[rn & 0x7]);
+    } else {               // RnH
+        n = rXh(cpu.er[rn & 0x7]);
+    }
+
+    uint8_t bit = 1 << (n & 0x07);
+    uint8_t value = mem_read8(aa);
+    value |= bit;
+    mem_write8(aa, value);
+    cpu.cycles += 8;
+}
+
+uint8_t cpu_fetch8() {
     uint8_t data = mem_read8(cpu.pc & 0xFFFF); // normal mode (16 bits)
     cpu.pc += 1;
     return data;
@@ -1675,12 +1767,67 @@ uint16_t cpu_fetch16() {
 
 void cpu_step() {
     uint8_t opcode = cpu_fetch8();
-    //printf("OPCODE: %02X\n", opcode);
 
     switch (opcode) {
         case 0x00: { // NOP
             nop();
             printf("NOP\n");
+            break;
+        }
+        case 0x60: { // BSET Rn, Rd
+            uint8_t second_byte = cpu_fetch8();
+            bset_rn_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("BSET Rn, Rd\n");
+            break;
+        }
+        case 0x70: { // BSET #xx:3, Rd
+            uint8_t second_byte = cpu_fetch8();
+            bset_xx3_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("BSET #xx:3, Rd\n");
+            break;
+        }
+        case 0x7D: {
+            uint8_t second_byte = cpu_fetch8();
+            uint8_t third_byte = cpu_fetch8();
+            uint8_t fourth_byte = cpu_fetch8();
+            switch(third_byte) {
+                case 0x60: { // BSET Rn, @ERd
+                    bset_rn_addr_erd((fourth_byte & 0xF0) >> 4, (second_byte & 0xF0) >> 4);
+                    printf("BSET Rn, @ERd\n");
+                    break;
+                }
+                case 0x70: { // BSET #xx:3, @ERd
+                    bset_xx3_addr_erd((fourth_byte & 0xF0) >> 4, (second_byte & 0xF0) >> 4);
+                    printf("BSET #xx:3, @ERd\n");
+                    break;
+                }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
+            }
+            break;
+        }
+        case 0x7F: {
+            uint8_t second_byte = cpu_fetch8();
+            uint8_t third_byte = cpu_fetch8();
+            uint8_t fourth_byte = cpu_fetch8();
+            switch(third_byte) {
+                case 0x60: { // BSET Rn, @aa:8
+                    bset_rn_aa8((fourth_byte & 0xF0) >> 4, second_byte);
+                    printf("BSET Rn, @aa:8\n");
+                    break;
+                }
+                case 0x70: { // BSET #xx:3, @aa:8
+                    bset_xx3_aa8((fourth_byte & 0xF0) >> 4, second_byte);
+                    printf("BSET #xx:3, @aa:8\n");
+                    break;
+                }
+                default:
+                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Current PC: %06X\n", cpu.pc);
+                    exit(-1);
+            }
             break;
         }
         case 0x0B: {
