@@ -1753,6 +1753,9 @@ static void bset_rn_aa8(uint8_t rn, uint8_t aa) {
     cpu.cycles += 8;
 }
 
+// AND.B #xx:8, Rd
+static void and_b_xx8_rd(uint8_t xx, uint8_t rd) {}
+
 uint8_t cpu_fetch8() {
     uint8_t data = mem_read8(cpu.pc & 0xFFFF); // normal mode (16 bits)
     cpu.pc += 1;
