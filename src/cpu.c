@@ -1754,7 +1754,144 @@ static void bset_rn_aa8(uint8_t rn, uint8_t aa) {
 }
 
 // AND.B #xx:8, Rd
-static void and_b_xx8_rd(uint8_t xx, uint8_t rd) {}
+static void and_b_xx8_rd(uint8_t xx, uint8_t rd) {
+    uint8_t a;
+    uint8_t b = xx;
+    uint8_t result;
+
+    if ((rd & 0x8) >> 3) { // RnL
+        a = rXl(cpu.er[rd & 0x7]);
+        result = a & b;
+        set_rXl(rd & 0x7, result);
+    } else {               // RnH
+        a = rXh(cpu.er[rd & 0x7]);
+        result = a & b;
+        set_rXh(rd & 0x7, result);
+    }
+
+    // set the flags
+    set_N(result & 0x80);
+    set_Z(result == 0);
+    set_V(false);
+
+    cpu.cycles += 2;
+}
+
+// AND.B Rs, Rd
+static void and_b_rs_rd(uint8_t rs, uint8_t rd) {
+    uint8_t a;
+    uint8_t b;
+    uint8_t result;
+
+    if ((rs & 0x8) >> 3) { // RnL
+        b = rXl(cpu.er[rs & 0x7]);
+    } else {               // RnH
+        b = rXh(cpu.er[rs & 0x7]);
+    }
+
+    if ((rd & 0x8) >> 3) { // RnL
+        a = rXl(cpu.er[rd & 0x7]);
+        result = a & b;
+        set_rXl(rd & 0x7, result);
+    } else {               // RnH
+        a = rXh(cpu.er[rd & 0x7]);
+        result = a & b;
+        set_rXh(rd & 0x7, result);
+    }
+
+    // set the flags
+    set_N(result & 0x80);
+    set_Z(result == 0);
+    set_V(false);
+
+    cpu.cycles += 2;
+}
+
+// AND.W #xx:16, rd
+static void and_w_xx16_rd(uint16_t xx, uint8_t rd) {
+    uint16_t a;
+    uint16_t b = xx;
+    uint16_t result;
+
+    if ((rd & 0x8) >> 3) { // En
+        a = eX(cpu.er[rd & 0x7]);
+        result = a & b;
+        set_eX(rd & 0x7, result);
+    } else {               // Rn
+        a = rX(cpu.er[rd & 0x7]);
+        result = a & b;
+        set_rX(rd & 0x7, result);
+    }
+
+    // set the flags
+    set_N(result & 0x8000);
+    set_Z(result == 0);
+    set_V(false);
+
+    cpu.cycles += 4;
+}
+
+// AND.W Rs, Rd
+static void and_w_rs_rd(uint8_t rs, uint8_t rd) {
+    uint16_t a;
+    uint16_t b;
+    uint16_t result;
+
+    if ((rs & 0x8) >> 3) { // En
+        b = eX(cpu.er[rs & 0x7]);
+    } else {               // Rn
+        b = rX(cpu.er[rs & 0x7]);
+    }
+
+    if ((rd & 0x8) >> 3) { // En
+        a = eX(cpu.er[rd & 0x7]);
+        result = a & b;
+        set_eX(rd & 0x7, result);
+    } else {               // Rn
+        a = rX(cpu.er[rd & 0x7]);
+        result = a & b;
+        set_rX(rd & 0x7, result);
+    }
+
+    // set the flags
+    set_N(result & 0x8000);
+    set_Z(result == 0);
+    set_V(false);
+
+    cpu.cycles += 2;
+}
+
+// AND.L #xx:32, ERd
+static void and_l_xx32_erd(uint32_t xx, uint8_t erd) {
+    uint32_t a = cpu.er[erd & 0x7];
+    uint32_t b = xx;
+    uint32_t result = a & b;
+
+    cpu.er[erd & 0x7] = result;
+
+    // set the flags
+    set_N(result & 0x80000000);
+    set_Z(result == 0);
+    set_V(false);
+
+    cpu.cycles += 6;
+}
+
+// AND.L Rs, ERd
+static void and_l_rs_erd(uint8_t rs, uint8_t erd) {
+    uint32_t a = cpu.er[erd & 0x7];
+    uint32_t b = cpu.er[rs & 0x7];
+    uint32_t result = a & b;
+
+    cpu.er[erd & 0x7] = result;
+
+    // set the flags
+    set_N(result & 0x80000000);
+    set_Z(result == 0);
+    set_V(false);
+
+    cpu.cycles += 4;
+}
 
 uint8_t cpu_fetch8() {
     uint8_t data = mem_read8(cpu.pc & 0xFFFF); // normal mode (16 bits)
@@ -1775,6 +1912,39 @@ void cpu_step() {
         case 0x00: { // NOP
             nop();
             printf("NOP\n");
+            break;
+        }
+        case 0xE0:
+        case 0xE1:
+        case 0xE2:
+        case 0xE3:
+        case 0xE4:
+        case 0xE5:
+        case 0xE6:
+        case 0xE7:
+        case 0xE8:
+        case 0xE9:
+        case 0xEA:
+        case 0xEB:
+        case 0xEC:
+        case 0xED:
+        case 0xEE:
+        case 0xEF: { // AND.B #xx:8, Rd
+            uint8_t imm = cpu_fetch8();
+            and_b_xx8_rd(imm, opcode & 0x0F);
+            printf("AND.B #xx:8, Rd\n");
+            break;
+        }
+        case 0x16: { // AND.B Rs, Rd
+            uint8_t second_byte = cpu_fetch8();
+            and_b_rs_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("AND.B Rs, Rd\n");
+            break;
+        }
+        case 0x66: { // AND.W Rs, Rd
+            uint8_t second_byte = cpu_fetch8();
+            and_w_rs_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("AND.W Rs, Rd\n");
             break;
         }
         case 0x60: { // BSET Rn, Rd
@@ -2490,6 +2660,14 @@ void cpu_step() {
                     printf("SUB.W #xx:16, Rd\n");
                     break;
                 }
+                case 0x60: { // AND.W #xx:16, rd
+                    uint8_t third_byte = cpu_fetch8();
+                    uint8_t fourth_byte = cpu_fetch8();
+                    uint16_t imm = (third_byte << 8) | fourth_byte;
+                    and_w_xx16_rd(imm, second_byte & 0x0F);
+                    printf("AND.W #xx:16, Rd\n");
+                    break;
+                }
                 default:
                     printf("Error: opcode not implemented: 0x%02X\n", opcode);
                     printf("Current PC: %06X\n", cpu.pc);
@@ -2636,6 +2814,11 @@ void cpu_step() {
                     printf("SUB.L #xx:32, ERd\n");
                     break;
                 }
+                case 0x60: { // AND.L #xx:32, ERd
+                    and_l_xx32_erd(imm, second_byte & 0x0F);
+                    printf("AND.L #xx:32, ERd\n");
+                    break;
+                }
                 default:
                     printf("Error: opcode not implemented: 0x%02X\n", opcode);
                     printf("Current PC: %06X\n", cpu.pc);
@@ -2661,6 +2844,12 @@ void cpu_step() {
                             break;
                         }
                     }
+                    break;
+                }
+                case 0x66: { // AND.L Rs, ERd
+                    uint8_t fourth_byte = cpu_fetch8();
+                    and_l_rs_erd((fourth_byte & 0xF0) >> 4, fourth_byte & 0x0F);
+                    printf("AND.L Rs, ERd\n");
                     break;
                 }
                 case 0x6F: {
