@@ -1893,6 +1893,23 @@ static void and_l_rs_erd(uint8_t rs, uint8_t erd) {
     cpu.cycles += 4;
 }
 
+// BSR (Branch to SubRoutine)
+// BSR d:8
+static void bsr_d8(uint8_t disp) {
+    cpu.er[0x7] -= 2;
+    mem_write16(cpu.er[0x7], cpu.pc & 0xFFFF);
+    cpu.pc += (int8_t) disp;
+    cpu.cycles += 6;
+}
+
+// BSR d:16
+static void bsr_d16(uint16_t disp) {
+    cpu.er[0x7] -= 2;
+    mem_write16(cpu.er[0x7], cpu.pc & 0xFFFF);
+    cpu.pc += (int16_t) disp;
+    cpu.cycles += 8;
+}
+
 uint8_t cpu_fetch8() {
     uint8_t data = mem_read8(cpu.pc & 0xFFFF); // normal mode (16 bits)
     cpu.pc += 1;
@@ -1912,6 +1929,21 @@ void cpu_step() {
         case 0x00: { // NOP
             nop();
             printf("NOP\n");
+            break;
+        }
+        case 0x55: { // BSR d:8
+            uint8_t disp = cpu_fetch8();
+            bsr_d8(disp);
+            printf("BSR d:8\n");
+            break;
+        }
+        case 0x5C: { // BSR d:16
+            uint8_t second_byte = cpu_fetch8();
+            uint8_t third_byte = cpu_fetch8();
+            uint8_t fourth_byte = cpu_fetch8();
+            uint16_t disp = (third_byte << 8) | fourth_byte;
+            bsr_d16(disp);
+            printf("BSR d:16\n");
             break;
         }
         case 0xE0:
