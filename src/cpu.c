@@ -1910,6 +1910,101 @@ static void bsr_d16(uint16_t disp) {
     cpu.cycles += 8;
 }
 
+// BCLR #xx:3, Rd
+static void bclr_xx3_rd(uint8_t xx, uint8_t rd) {
+    uint8_t bit = ~(1 << (xx & 0x07));
+
+    if ((rd & 0x8) >> 3) { // RnL
+        uint8_t val = rXl(cpu.er[rd & 0x7]);
+        val &= bit;
+        set_rXl(rd & 0x7, val);
+    } else {               // RnH
+        uint8_t val = rXh(cpu.er[rd & 0x7]);
+        val &= bit;
+        set_rXh(rd & 0x7, val);
+    }
+
+    cpu.cycles += 2;
+}
+
+// BCLR #xx:3 @ERd
+static void bclr_xx3_addr_erd(uint8_t xx, uint8_t erd) {
+    uint8_t value = mem_read8(cpu.er[erd & 0x7]);
+    uint8_t bit = ~(1 << (xx & 0x07));
+    value &= bit;
+    mem_write8(cpu.er[erd & 0x7], value);
+    cpu.cycles += 8;
+}
+
+// BCLR #xx:3 @aa:8
+static void bclr_xx3_aa8(uint8_t xx, uint8_t aa) {
+    uint8_t value = mem_read8(aa);
+    uint8_t bit = ~(1 << (xx & 0x07));
+    value &= bit;
+    mem_write8(aa, value);
+    cpu.cycles += 8;
+}
+
+// BCLR Rn, Rd
+static void bclr_rn_rd(uint8_t rn, uint8_t rd) {
+    uint8_t n;
+
+    if ((rn & 0x8) >> 3) { // RnL
+        n = rXl(cpu.er[rn & 0x7]);
+    } else {               // RnH
+        n = rXh(cpu.er[rn & 0x7]);
+    }
+
+    uint8_t bit = ~(1 << (n & 0x07));
+    uint8_t value;
+
+    if ((rd & 0x8) >> 3) { // RnL
+        value = rXl(cpu.er[rd & 0x7]);
+        value &= bit;
+        set_rXl(rd & 0x7, value);
+    } else {               // RnH
+        value = rXh(cpu.er[rd & 0x7]);
+        value &= bit;
+        set_rXh(rd & 0x7, value);
+    }
+
+    cpu.cycles += 2;
+}
+
+// BCLR Rn, @ERd
+static void bclr_rn_addr_erd(uint8_t rn, uint8_t erd) {
+    uint8_t n;
+
+    if ((rn & 0x8) >> 3) { // RnL
+        n = rXl(cpu.er[rn & 0x7]);
+    } else {               // RnH
+        n = rXh(cpu.er[rn & 0x7]);
+    }
+
+    uint8_t bit = ~(1 << (n & 0x07));
+    uint8_t value = mem_read8(cpu.er[erd & 0x7]);
+    value &= bit;
+    mem_write8(cpu.er[erd & 0x7], value);
+    cpu.cycles += 8;
+}
+
+// BCLR Rn, @aa:8
+static void bclr_rn_aa8(uint8_t rn, uint8_t aa) {
+    uint8_t n;
+
+    if ((rn & 0x8) >> 3) { // RnL
+        n = rXl(cpu.er[rn & 0x7]);
+    } else {               // RnH
+        n = rXh(cpu.er[rn & 0x7]);
+    }
+
+    uint8_t bit = ~(1 << (n & 0x07));
+    uint8_t value = mem_read8(aa);
+    value &= bit;
+    mem_write8(aa, value);
+    cpu.cycles += 8;
+}
+
 uint8_t cpu_fetch8() {
     uint8_t data = mem_read8(cpu.pc & 0xFFFF); // normal mode (16 bits)
     cpu.pc += 1;
@@ -1929,6 +2024,18 @@ void cpu_step() {
         case 0x00: { // NOP
             nop();
             printf("NOP\n");
+            break;
+        }
+        case 0x72: { // BCLR #xx:3, Rd
+            uint8_t second_byte = cpu_fetch8();
+            bclr_xx3_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("BCLR #xx:3, Rd\n");
+            break;
+        }
+        case 0x62: { // BCLR Rn, Rd
+            uint8_t second_byte = cpu_fetch8();
+            bclr_rn_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("BCLR Rn, Rd\n");
             break;
         }
         case 0x55: { // BSR d:8
@@ -2001,9 +2108,19 @@ void cpu_step() {
                     printf("BSET Rn, @ERd\n");
                     break;
                 }
+                case 0x62: { // BCLR Rn, @ERd
+                    bclr_rn_addr_erd((fourth_byte & 0xF0) >> 4, (second_byte & 0xF0) >> 4);
+                    printf("BCLR Rn, @ERd\n");
+                    break;
+                }
                 case 0x70: { // BSET #xx:3, @ERd
                     bset_xx3_addr_erd((fourth_byte & 0xF0) >> 4, (second_byte & 0xF0) >> 4);
                     printf("BSET #xx:3, @ERd\n");
+                    break;
+                }
+                case 0x72: { // BCLR #xx:3 @ERd
+                    bclr_xx3_addr_erd((fourth_byte & 0xF0) >> 4, (second_byte & 0xF0) >> 4);
+                    printf("BCLR #xx:3 @ERd\n");
                     break;
                 }
                 default:
@@ -2023,13 +2140,23 @@ void cpu_step() {
                     printf("BSET Rn, @aa:8\n");
                     break;
                 }
+                case 0x62: { // BCLR Rn, @aa:8
+                    bclr_rn_aa8((fourth_byte & 0xF0) >> 4, second_byte);
+                    printf("BCLR Rn, @aa:8\n");
+                    break;
+                }
                 case 0x70: { // BSET #xx:3, @aa:8
                     bset_xx3_aa8((fourth_byte & 0xF0) >> 4, second_byte);
                     printf("BSET #xx:3, @aa:8\n");
                     break;
                 }
+                case 0x72: { // BCLR #xx:3 @aa:8
+                    bclr_xx3_aa8((fourth_byte & 0xF0) >> 4, second_byte);
+                    printf("BCLR #xx:3 @aa:8\n");
+                    break;
+                }
                 default:
-                    printf("Error: opcode not implemented: 0x%02X\n", opcode);
+                    printf("Error: opcode not implemented: 0x%02X __ %02X\n", opcode, third_byte);
                     printf("Current PC: %06X\n", cpu.pc);
                     exit(-1);
             }

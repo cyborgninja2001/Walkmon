@@ -88,6 +88,7 @@ void mem_write8(uint32_t address, uint8_t value) {
     if (0x0000 <= address && address <= 0xBFFF) {
         printf("Attempt to write to ROM: mem_write8(0x%04X)\n", address);
         //exit(-1);
+        //memory.rom[address] = value;
     } else if (0xF020 <= address && address <= 0xF0FF) {
         memory.mmio1[address - 0xF020] = value;
     } else if (0xF780 <= address && address <= 0xFF7F) {
