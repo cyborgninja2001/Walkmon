@@ -2042,6 +2042,43 @@ static void bild_xx3_aa8(uint8_t xx, uint8_t aa) {
     cpu.cycles += 6;
 }
 
+// BLD (Bit LoaD)
+// BLD #xx:3,Rd
+static void bld_xx3_rd(uint8_t xx, uint8_t rd) {
+    uint8_t n;
+
+    if ((rd & 0x8) >> 3) { // RnL
+        n = rXl(cpu.er[rd & 0x7]);
+    } else {               // RnH
+        n = rXh(cpu.er[rd & 0x7]);
+    }
+
+    uint8_t bit = (n >> (xx & 0x7)) & 1;
+    set_C(bit);
+
+    cpu.cycles += 2;
+}
+
+// BLD #xx:3,@ERd
+static void bld_xx3_addr_erd(uint8_t xx, uint8_t erd) {
+    uint8_t n = mem_read8(cpu.er[erd & 0x7]);
+
+    uint8_t bit = (n >> (xx & 0x7)) & 1;
+    set_C(bit);
+
+    cpu.cycles += 6;
+}
+
+// BLD #xx:3,@aa:8
+static void bld_xx3_aa8(uint8_t xx, uint8_t aa) {
+    uint8_t n = mem_read8(aa);
+
+    uint8_t bit = (n >> (xx & 0x7)) & 1;
+    set_C(bit);
+
+    cpu.cycles += 6;
+}
+
 uint8_t cpu_fetch8() {
     uint8_t data = mem_read8(cpu.pc & 0xFFFF); // normal mode (16 bits)
     cpu.pc += 1;
@@ -2072,6 +2109,11 @@ void cpu_step() {
         case 0x77: {
             uint8_t second_byte = cpu_fetch8();
             switch(second_byte & 0x80) {
+                case 0x00: { // BLD #xx:3,Rd
+                    bld_xx3_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+                    printf("BLD #xx3,Rd\n");
+                    break;
+                }
                 case 0x80: { // BILD #xx3.Rd
                     bild_xx3_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
                     printf("BILD #xx3.Rd\n");
@@ -2091,6 +2133,11 @@ void cpu_step() {
             switch (third_byte) {
                 case 0x77: {
                     switch (fourth_byte & 0x80) {
+                        case 0x00: { // BLD #xx:3,@ERd
+                            bld_xx3_addr_erd((fourth_byte & 0xF0) >> 4, (second_byte & 0xF0) >> 4);
+                            printf("BLD #xx:3,@ERd\n");
+                            break;
+                        }
                         case 0x80: { // BILD #xx:3.@ERd
                             bild_xx3_addr_erd((fourth_byte & 0xF0) >> 4, (second_byte & 0xF0) >> 4);
                             printf("BILD #xx:3.@ERd\n");
@@ -2117,6 +2164,11 @@ void cpu_step() {
             switch (third_byte) {
                 case 0x77: {
                     switch (fourth_byte & 0x80) {
+                        case 0x00: { // BLD #xx:3,@aa:8
+                            bld_xx3_aa8((fourth_byte & 0xF0) >> 4, second_byte);
+                            printf("BLD #xx:3,@aa:8\n");
+                            break;
+                        }
                         case 0x80: { // BILD #xx:3.@aa:8
                             bild_xx3_aa8((fourth_byte & 0xF0) >> 4, second_byte);
                             printf("BILD #xx:3.@aa:8\n");
