@@ -68,3 +68,7 @@ void eeprom_mmio_write(uint16_t address, uint8_t value) {
             break;
     }
 }
+
+uint8_t eeprom_read(uint16_t address) {
+    return eeprom.data[address];
+}

@@ -26,7 +26,13 @@ int main(int argc, char *argv[]) {
 
     //printf("OPCODE: 0x%02X %02X\n", mem_read8(0x2C8), mem_read8(0x2C9));
     //printf("OPCODE 1: 0x%02X %02X %02X\n", mem_read8(0xB0F2), mem_read8(0xB0F2 + 1), mem_read8(0xB0F2 + 2));
+
+    //for (int i = 0x0000; i <= 0x0007; i++) {
+    //    printf("%c", eeprom_read(i));
+    //}
+    //printf("\n");
     //exit(-1);
+
     while (true) {
         cpu_step();
         cpu_debug();

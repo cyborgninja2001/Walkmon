@@ -19,4 +19,6 @@ bool eeprom_save(const char *path);
 uint8_t eeprom_mmio_read(uint16_t address);
 void eeprom_mmio_write(uint16_t address, uint8_t value);
 
+uint8_t eeprom_read(uint16_t address);
+
 #endif
