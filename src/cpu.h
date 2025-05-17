@@ -99,14 +99,10 @@ void set_V(bool v);
 // set Carry flag (C) (bit 0) with value 'v'
 void set_C(bool v);
 
-// *EXCEPTIONS*
-void cpu_cycles(uint64_t n);
-
 // *MAIN FUNCTIONS*
 void cpu_reset();
 uint16_t cpu_fetch16();
 void cpu_step();        // fetch, decode & execute
-
 void cpu_debug();
 
 #endif

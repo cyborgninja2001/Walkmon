@@ -1,10 +1,7 @@
 #include "cpu.h"
 
-static CPU cpu;
-
-void cpu_cycles(uint64_t n) {
-    cpu.cycles += n;
-}
+//static CPU cpu;
+CPU cpu;
 
 void set_rXl(uint8_t reg, uint8_t value) {
     cpu.er[reg] &= 0xFFFFFF00; // clear rXl

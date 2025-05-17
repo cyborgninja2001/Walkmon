@@ -11,6 +11,18 @@
 // External interrupt (H'000E to H'000F)
 uint16_t get_nmi();
 
+// H'000E to H'000F
+#define NMI 0x000E
+
+// H'0020 to H'0021
+#define IRQ0 0x0020
+
+// H'0022 to H'0023
+#define IRQ1 0x0022
+
+// H'0024 to H'0025
+#define IRQAEC 0x0024
+
 // Interrupt edge select register (IEGR)
 #define IEGR 0xFFF2
 
@@ -25,6 +37,9 @@ uint16_t get_nmi();
 
 // Interrupt flag register 2 (IRR2)
 #define IRR2 0xFFF7
+
+// RTC 0.25 H'002E to H'002F
+#define RTC_025 0x002E
 
 uint8_t get_iegr();
 uint8_t get_ienr1();

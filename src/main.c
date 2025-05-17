@@ -3,6 +3,7 @@
 #include "cpu.h"
 #include "eeprom.h"
 #include "memory.h"
+#include "exceptions.h"
 
 int main(int argc, char *argv[]) {
     bool loaded_rom = load_rom(argv[1]);
@@ -35,6 +36,7 @@ int main(int argc, char *argv[]) {
 
     while (true) {
         cpu_step();
+        check_exceptions();
         cpu_debug();
     }
     return 0;
