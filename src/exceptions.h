@@ -38,8 +38,17 @@ uint16_t get_nmi();
 // Interrupt flag register 2 (IRR2)
 #define IRR2 0xFFF7
 
+// RTC interrupt flags
+#define RTCFLG 0xF067
+
+// RTCFLG bits
+#define RTC_025SEIFG (1 << 0)
+
 // RTC 0.25 H'002E to H'002F
 #define RTC_025 0x002E
+
+// Timer B1 H'0042 to H'0043
+#define TIMER_B1 0x0042
 
 uint8_t get_iegr();
 uint8_t get_ienr1();

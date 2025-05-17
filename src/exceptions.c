@@ -34,8 +34,6 @@ uint8_t get_irr2() {
 
 // handles interrupts & TRAP instruction
 void handle_exception(uint8_t vector) {
-    uint16_t address = mem_read16(vector);
-
     cpu.er[0x7] -= 2;
     mem_write16(cpu.er[0x7], cpu.pc & 0xFFFF);
 
@@ -45,7 +43,7 @@ void handle_exception(uint8_t vector) {
     //if (true) {} else {}
     set_I(true); // just for now
 
-    cpu.pc = address; // execution branches to that address
+    cpu.pc = mem_read16(vector); // execution branches to that address
 }
 
 void check_exceptions() {
@@ -63,21 +61,27 @@ void check_exceptions() {
         return;
     }
 
+    // IRQ1
+    if ((irr1 & (1 << 1)) && (ienr1 & (1 << 1))) {
+        handle_exception(IRQ1);
+        return;
+    }
+
+    // IRQAEC
+    if ((irr1 & (1 << 2)) && (ienr1 & (1 << 2))) {
+        handle_exception(IRQAEC);
+        return;
+    }
+
     // RTC 0.25
     if (ienr1 & (1 << 7)) {
         handle_exception(RTC_025);
         return;
     }
 
-    // IRQ1
-    if ((irr1 & (1 << 1)) && (ienr1 & (1 << 1))) {
-        handle_exception(0x0022);
-        return;
-    }
-
-    // IRQAEC
-    if ((irr1 & (1 << 2)) && (ienr1 & (1 << 2))) {
-        handle_exception(0x0024);
+    // Timer B1
+    if ((irr2 & (1 << 2)) && (ienr2 & (1 << 2))) {
+        handle_exception(TIMER_B1);
         return;
     }
 }
