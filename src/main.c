@@ -36,6 +36,9 @@ int main(int argc, char *argv[]) {
     //printf("OPCODE %02X\n", mem_read8(mem_read16(NMI)));
     //exit(-1);
     //mem_write8(IEGR, 0xFF);
+    //set_I(false);
+    //mem_write8(IRR1, 0xFF);
+    //mem_write8(IENR1, 0xFF);
     while (true) {
         cpu_step();
         check_exceptions();

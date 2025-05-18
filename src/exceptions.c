@@ -39,6 +39,7 @@ void handle_exception(uint8_t vector) {
     set_I(true); // just for now
 
     cpu.pc = mem_read16(vector); // execution branches to that address
+    cpu.cycles += 14; // ??
 }
 
 // Priority:
