@@ -8,34 +8,43 @@
 // interrupts are exceptions
 // There are four external interrupts: NMI, IRQAEC, IRQ1, and IRQ0.
 
-// External interrupt (H'000E to H'000F)
-uint16_t get_nmi();
+// The SSU and IIC share the same vector address. When using the IIC, shift the SSU to
+// standby mode using CKSTPR2.
 
-// H'000E to H'000F
-#define NMI 0x000E
+// VECTORS
+#define RESET                         0x0000
+#define NMI                           0x000E
+#define TRAPA0                        0x0010
+#define TRAPA1                        0x0012
+#define TRAPA2                        0x0014
+#define TRAPA3                        0x0016
+#define SLEEP                         0x001A
+#define IRQ0                          0x0020
+#define IRQ1                          0x0022
+#define IRQAEC                        0x0024
+#define COMP0                         0x002A
+#define COMP1                         0x002C
+#define QUARTER_SECOND_OVERFLOW       0x002E
+#define HALF_SECOND_OVERFLOW          0x0030
+#define SECOND_PERIODIC_OVERFLOW      0x0032
+#define MINUTE_PERIODIC_OVERFLOW      0x0034
+#define HOUR_PERIODIC_OVERFLOW        0x0036
+#define DAY_OF_WEEK_PERIODIC_OVERFLOW 0x0038
+#define WEEK_PERIODIC_OVERFLOW        0x003A
+#define FREE_RUNNING_OVERFLOW         0x003C
+#define WDT_OVERFLOW                  0x003E
+#define ASYNCHRONOUS_EVENT_COUNTER    0x0040
+#define TIMER_B1                      0x0042
+#define SSU_IIC2                      0x0044
+#define TIMER_W                       0x0046
+#define SCI3                          0x004A
+#define AD_CONVERTER                  0x004C
 
-// H'0020 to H'0021
-#define IRQ0 0x0020
-
-// H'0022 to H'0023
-#define IRQ1 0x0022
-
-// H'0024 to H'0025
-#define IRQAEC 0x0024
-
-// Interrupt edge select register (IEGR)
+// Interrupt registers
 #define IEGR 0xFFF2
-
-// Interrupt enable register 1 (IENR1)
 #define IENR1 0xFFF3
-
-//Interrupt enable register 2 (IENR2)
 #define IENR2 0xFFF4
-
-// Interrupt flag register 1 (IRR1)
 #define IRR1 0xFFF6
-
-// Interrupt flag register 2 (IRR2)
 #define IRR2 0xFFF7
 
 // RTC interrupt flags
@@ -43,12 +52,6 @@ uint16_t get_nmi();
 
 // RTCFLG bits
 #define RTC_025SEIFG (1 << 0)
-
-// RTC 0.25 H'002E to H'002F
-#define RTC_025 0x002E
-
-// Timer B1 H'0042 to H'0043
-#define TIMER_B1 0x0042
 
 uint8_t get_iegr();
 uint8_t get_ienr1();
