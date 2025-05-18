@@ -2081,6 +2081,15 @@ static void bld_xx3_aa8(uint8_t xx, uint8_t aa) {
     cpu.cycles += 6;
 }
 
+// RTE (ReTurn from Exception)
+static void rte() {
+    cpu.ccr = mem_read8(cpu.er[0x7]);
+    cpu.er[0x7] += 2;
+    cpu.pc = mem_read16(cpu.er[0x7]);
+    cpu.er[0x7] += 2;
+    cpu.cycles += 10;
+}
+
 uint8_t cpu_fetch8() {
     uint8_t data = mem_read8(cpu.pc & 0xFFFF); // normal mode (16 bits)
     cpu.pc += 1;
@@ -2100,6 +2109,17 @@ void cpu_step() {
         case 0x00: { // NOP
             nop();
             printf("NOP\n");
+            break;
+        }
+        case 0x56: {
+            uint8_t second_byte = cpu_fetch8();
+            switch (second_byte) {
+                case 0x70: { // RTE (ReTurn from Exception)
+                    rte();
+                    printf("RTE (ReTurn from Exception)\n");
+                    break;
+                }
+            }
             break;
         }
         case 0x72: { // BCLR #xx:3, Rd

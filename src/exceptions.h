@@ -47,12 +47,6 @@
 #define IRR1 0xFFF6
 #define IRR2 0xFFF7
 
-// RTC interrupt flags
-#define RTCFLG 0xF067
-
-// RTCFLG bits
-#define RTC_025SEIFG (1 << 0)
-
 uint8_t get_iegr();
 uint8_t get_ienr1();
 uint8_t get_ienr2();
