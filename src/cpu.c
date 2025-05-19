@@ -92,7 +92,7 @@ void cpu_reset() {
     cpu.pc = 0x00000000;
     uint32_t vector =  mem_read16(0x0000); // hi
     //vector |= mem_read16(0x0002);                 // lo
-    cpu.pc = vector & 0xFFFFFF;                   // only use 24 bits
+    cpu.pc = vector;                   // 0x02C4
 
     // just in case
     if (cpu.pc == 0xFFFFFF || cpu.pc == 0x000000) {
