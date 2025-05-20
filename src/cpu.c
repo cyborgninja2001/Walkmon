@@ -2127,9 +2127,9 @@ static void mulxu_w_rs_erd(uint8_t rs, uint8_t erd) {
     uint32_t result;
 
     if ((rs & 0x8) >> 3) { // En
-        a = eX(cpu.er[rs & 0x7]) & 0xFF;
+        a = eX(cpu.er[rs & 0x7]);
     } else {               // Rn
-        a = rX(cpu.er[rs & 0x7]) & 0xFF;
+        a = rX(cpu.er[rs & 0x7]);
     }
 
     b = cpu.er[erd & 0x7] & 0xFFFF;
