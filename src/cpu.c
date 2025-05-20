@@ -2093,6 +2093,52 @@ static void rte() {
     cpu.cycles += 10;
 }
 
+// MULXU (MULtiply eXtend as Unsigned)
+
+// MULXU.B Rs, Rd
+static void mulxu_b_rs_rd(uint8_t rs, uint8_t rd) {
+    uint8_t a;
+    uint8_t b;
+    uint16_t result;
+
+        if ((rs & 0x8) >> 3) { // RnL
+            a = rXl(cpu.er[rs & 0x7]);
+        } else {               // RnH
+            a = rXh(cpu.er[rs & 0x7]);
+        }
+
+        if ((rd & 0x8) >> 3) { // En
+            b = eX(cpu.er[rd & 0x7]) & 0xFF;
+            result = a * b;
+            set_eX(rd & 0x7, result);
+        } else {               // Rn
+            b = rX(cpu.er[rd & 0x7]) & 0xFF;
+            result = a * b;
+            set_rX(rd & 0x7, result);
+        }
+
+        cpu.cycles += 14;
+}
+
+// MULXU.W Rs, ERd
+static void mulxu_w_rs_erd(uint8_t rs, uint8_t erd) {
+    uint16_t a;
+    uint16_t b;
+    uint32_t result;
+
+    if ((rs & 0x8) >> 3) { // En
+        a = eX(cpu.er[rs & 0x7]) & 0xFF;
+    } else {               // Rn
+        a = rX(cpu.er[rs & 0x7]) & 0xFF;
+    }
+
+    b = cpu.er[erd & 0x7] & 0xFFFF;
+    result = a * b;
+    cpu.er[erd & 0x7] = result;
+
+    cpu.cycles += 22;
+}
+
 uint8_t cpu_fetch8() {
     uint8_t data = mem_read8(cpu.pc & 0xFFFF); // normal mode (16 bits)
     cpu.pc += 1;
@@ -2113,6 +2159,18 @@ void cpu_step() {
         case 0x00: { // NOP
             nop();
             printf("NOP\n");
+            break;
+        }
+        case 0x50: { // MULXU.B Rs, Rd
+            uint8_t second_byte = cpu_fetch8();
+            mulxu_b_rs_rd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("MULXU.B Rs, Rd\n");
+            break;
+        }
+        case 0x52: { // MULXU.W Rs, ERd
+            uint8_t second_byte = cpu_fetch8();
+            mulxu_w_rs_erd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
+            printf("MULXU.W Rs, ERd\n");
             break;
         }
         case 0x56: {
