@@ -406,11 +406,14 @@ static void mov_w_disp24_addr_ers_rd(uint32_t disp, uint8_t ers, uint8_t rd) {
 
 // MOV.W @ERs+, Rd
 static void mov_w_addr_ers_plus_rd(uint8_t ers, uint8_t rd) {
+    printf("****ERS: %02X ****\n", ers & 0x7);
     uint32_t address = cpu.er[ers & 0x7] & 0xFFFF; //& 0x00FFFFFF;
+    printf("***ADDRESS: %04X\n ****", address & 0xFFFF);
+    printf("ERS + 2 %08X\n", cpu.er[ers & 0x7] + 2);
     // register value should be even
     if (!((address % 2) == 0)) {
         printf("ERROR: MOV.W @ERs+, Rd. ERs should be even!\n");
-        exit(-1);
+        //exit(-1);
     }
     uint16_t value = mem_read16(address);
 
@@ -2104,6 +2107,7 @@ uint16_t cpu_fetch16() {
 
 void cpu_step() {
     uint8_t opcode = cpu_fetch8();
+    printf("OPCODE: %02X\n", opcode);
 
     switch (opcode) {
         case 0x00: { // NOP
