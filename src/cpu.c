@@ -406,7 +406,7 @@ static void mov_w_disp24_addr_ers_rd(uint32_t disp, uint8_t ers, uint8_t rd) {
 
 // MOV.W @ERs+, Rd
 static void mov_w_addr_ers_plus_rd(uint8_t ers, uint8_t rd) {
-    uint32_t address = cpu.er[ers & 0x7] & 0x00FFFFFF;
+    uint32_t address = cpu.er[ers & 0x7] & 0xFFFF; //& 0x00FFFFFF;
     // register value should be even
     if (!((address % 2) == 0)) {
         printf("ERROR: MOV.W @ERs+, Rd. ERs should be even!\n");
