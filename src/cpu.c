@@ -2139,6 +2139,103 @@ static void mulxu_w_rs_erd(uint8_t rs, uint8_t erd) {
     cpu.cycles += 22;
 }
 
+// DEC.B Rd
+static void dec_b_rd(uint8_t rd) {
+    uint8_t result;
+    uint8_t value;
+
+    if ((rd & 0x8) >> 3) { // RnL
+        value = rXl(cpu.er[rd & 0x7]);
+        result = value - 1;
+        set_rXl(rd & 0x7, result);
+    } else {               // RnH
+        value = rXh(cpu.er[rd & 0x7]);
+        result = value - 1;
+        set_rXh(rd & 0x7, result);
+    }
+
+    // set the flags
+    set_N(result & 0x80);
+    set_Z(result == 0);
+    set_V(value == 0x80);
+
+    cpu.cycles += 2;
+}
+
+// DEC.W #1, Rd
+static void dec_w_1_rd(uint8_t rd) {
+    uint16_t result;
+    uint16_t value;
+
+    if ((rd & 0x8) >> 3) { // En
+        value = eX(cpu.er[rd & 0x7]);
+        result = value - 1;
+        set_eX(rd & 0x7, result);
+    } else {               // Rn
+        value = rX(cpu.er[rd & 0x7]);
+        result = value - 1;
+        set_rX(rd & 0x7, result);
+    }
+
+    // set the flags
+    set_N(result & 0x8000);
+    set_Z(result == 0);
+    set_V(value == 0x8000);
+
+    cpu.cycles += 2;
+}
+
+// DEC.W #2, Rd
+static void dec_w_2_rd(uint8_t rd) {
+    uint16_t result;
+    uint16_t value;
+
+    if ((rd & 0x8) >> 3) { // En
+        value = eX(cpu.er[rd & 0x7]);
+        result = value - 2;
+        set_eX(rd & 0x7, result);
+    } else {               // Rn
+        value = rX(cpu.er[rd & 0x7]);
+        result = value - 2;
+        set_rX(rd & 0x7, result);
+    }
+
+    // set the flags
+    set_N(result & 0x8000);
+    set_Z(result == 0);
+    set_V((value == 0x8000) || (value == 0x8001));
+
+    cpu.cycles += 2;
+}
+
+// DEC.L #1, ERd
+static void dec_l_1_erd(uint8_t erd) {
+    uint32_t value = cpu.er[erd & 0x7];
+    uint32_t result = value - 1;
+    cpu.er[erd & 0x7] = result;
+
+    // set the flags
+    set_N(result & 0x80000000);
+    set_Z(result == 0);
+    set_V(value == 0x80000000);
+
+    cpu.cycles += 2;
+}
+
+// DEC.L #2, ERd
+static void dec_l_2_erd(uint8_t erd) {
+    uint32_t value = cpu.er[erd & 0x7];
+    uint32_t result = value - 2;
+    cpu.er[erd & 0x7] = result;
+
+    // set the flags
+    set_N(result & 0x80000000);
+    set_Z(result == 0);
+    set_V((value == 0x80000000) || (value == 0x80000001));
+
+    cpu.cycles += 2;
+}
+
 uint8_t cpu_fetch8() {
     uint8_t data = mem_read8(cpu.pc & 0xFFFF); // normal mode (16 bits)
     cpu.pc += 1;
@@ -2698,6 +2795,16 @@ void cpu_step() {
                     printf("SUBS #1, ERd\n");
                     break;
                 }
+                case 0x50: { // DEC.W #1, Rd
+                    dec_w_1_rd(second_byte & 0x0F);
+                    printf("DEC.W #1, Rd\n");
+                    break;
+                }
+                case 0x70: { // DEC.L #1, ERd
+                    dec_l_1_erd(second_byte & 0x0F);
+                    printf("DEC.L #1, ERd\n");
+                    break;
+                }
                 case 0x80: { // SUBS #2, ERd
                     subs_2_erd(second_byte & 0x0F);
                     printf("SUBS #2, ERd\n");
@@ -2706,6 +2813,16 @@ void cpu_step() {
                 case 0x90: { // SUBS #4, ERd
                     subs_4_erd(second_byte & 0x0F);
                     printf("SUBS #4, ERd\n");
+                    break;
+                }
+                case 0xD0: { // DEC.W #2, Rd
+                    dec_w_2_rd(second_byte & 0x0F);
+                    printf("DEC.W #2, Rd\n");
+                    break;
+                }
+                case 0xF0: { // DEC.L #2, ERd
+                    dec_l_2_erd(second_byte & 0x0F);
+                    printf("DEC.L #2, ERd\n");
                     break;
                 }
                 default:
@@ -2730,7 +2847,11 @@ void cpu_step() {
         case 0x1A: {
             uint8_t second_byte = cpu_fetch8();
             switch (second_byte & 0x80) {
-                case 0x00: {}
+                case 0x00: { // DEC.B Rd
+                    dec_b_rd(second_byte & 0x0F);
+                    printf("DEC.B Rd\n");
+                    break;
+                }
                 case 0x80: { // SUB.L ERs, ERd
                     sub_l_ers_erd((second_byte & 0xF0) >> 4, second_byte & 0x0F);
                     printf("SUB.L ERs, ERd\n");
