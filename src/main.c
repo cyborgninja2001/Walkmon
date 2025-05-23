@@ -42,6 +42,8 @@ int main(int argc, char *argv[]) {
     extern CPU cpu;
     //mem_write8(0xF0E4, 0xFF);
     while (true) {
+        // why er7 (sp) is odd???? i think it shouldn't
+        //if ((cpu.er[0x7] % 2) != 0) { exit(-1); }
         mem_write8(0xF0E4, 0xFF);
         cpu_step();
         check_exceptions();
