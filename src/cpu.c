@@ -2269,10 +2269,12 @@ uint16_t cpu_fetch16() {
 
 void cpu_step() {
     uint8_t opcode = cpu_fetch8();
+    if ((cpu.pc % 2) == 0) { exit(-1); }
     printf("OPCODE: %02X\n", opcode);
 
     switch (opcode) {
         case 0x00: { // NOP
+            uint8_t second_byte = cpu_fetch8(); // it should be 0
             nop();
             printf("NOP\n");
             break;
