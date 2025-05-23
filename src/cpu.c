@@ -406,15 +406,9 @@ static void mov_w_disp24_addr_ers_rd(uint32_t disp, uint8_t ers, uint8_t rd) {
 
 // MOV.W @ERs+, Rd
 static void mov_w_addr_ers_plus_rd(uint8_t ers, uint8_t rd) {
-    printf("****ERS: %02X ****\n", ers & 0x7);
     uint32_t address = cpu.er[ers & 0x7] & 0xFFFF; //& 0x00FFFFFF;
-    printf("***ADDRESS: %04X\n ****", address & 0xFFFF);
-    printf("ERS + 2 %08X\n", cpu.er[ers & 0x7] + 2);
+    //if (!(address % 2 == 0)) address &= ~1;
     // register value should be even
-    if (!((address % 2) == 0)) {
-        printf("ERROR: MOV.W @ERs+, Rd. ERs should be even!\n");
-        //exit(-1);
-    }
     uint16_t value = mem_read16(address);
 
     cpu.er[ers & 0x7] += 2;
@@ -1239,6 +1233,7 @@ static void jsr_aa8(uint8_t aa) {
     mem_write16(sp_address, value);
 
     uint16_t address = mem_read16(aa);
+    if (!((address % 2) == 0)) address &= ~1; // **CHECK**
     cpu.pc = address;
     cpu.cycles += 8;
 }
@@ -2236,6 +2231,30 @@ static void dec_l_2_erd(uint8_t erd) {
     cpu.cycles += 2;
 }
 
+// JMP @ERn
+static void jmp_addr_ern(uint8_t ern) {
+    uint32_t address = cpu.er[ern & 0x7];
+    if (!(address % 2 == 0)) { printf("*ERROR: JUMP EVEN BRANCH ADDRESS*\n"); exit(-1); }
+    cpu.pc = address;
+    cpu.cycles += 4;
+}
+
+// JMP @aa:24
+static void jmp_aa24(uint32_t aa) {
+    uint32_t address = aa;
+    if (!(address % 2 == 0)) { printf("*ERROR: JUMP EVEN BRANCH ADDRESS*\n"); exit(-1); }
+    cpu.pc = address;
+    cpu.cycles += 6;
+}
+
+// JMP @@aa:8
+static void jmp_addr_aa8(uint8_t aa) {
+    uint16_t address = mem_read16(aa);
+    if (!(address % 2 == 0)) { printf("*ERROR: JUMP EVEN BRANCH ADDRESS*\n"); exit(-1); }
+    cpu.pc = address;
+    cpu.cycles += 8;
+}
+
 uint8_t cpu_fetch8() {
     uint8_t data = mem_read8(cpu.pc & 0xFFFF); // normal mode (16 bits)
     cpu.pc += 1;
@@ -2256,6 +2275,27 @@ void cpu_step() {
         case 0x00: { // NOP
             nop();
             printf("NOP\n");
+            break;
+        }
+        case 0x59: { // JMP @ERn
+            uint8_t second_byte = cpu_fetch8();
+            jmp_addr_ern((second_byte & 0xF0) >> 4);
+            printf("JMP @ERn\n");
+            break;
+        }
+        case 0x5A: { // JMP @aa:24
+            uint8_t second_byte = cpu_fetch8();
+            uint8_t third_byte = cpu_fetch8();
+            uint8_t fourth_byte = cpu_fetch8();
+            uint32_t abs = (second_byte << 16) | (third_byte << 8) | fourth_byte;
+            jmp_aa24(abs);
+            printf("JMP @aa:24\n");
+            break;
+        }
+        case 0x5B: { // JMP @@aa:8
+            uint8_t abs = cpu_fetch8();
+            jmp_addr_aa8(abs);
+            printf("JMP @@aa:8\n");
             break;
         }
         case 0x50: { // MULXU.B Rs, Rd
