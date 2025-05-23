@@ -57,7 +57,7 @@ uint16_t mem_read16(uint32_t address) {
 
     if (!(address % 2 == 0)) { // it's an odd address **
         printf("*ERROR: ODD ADDRESS!* mem_read16(%08X)\n", address);
-        //exit(-1);
+        exit(-1);
         //address &= ~1;
     }
 
