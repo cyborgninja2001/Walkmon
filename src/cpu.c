@@ -2255,6 +2255,13 @@ static void jmp_addr_aa8(uint8_t aa) {
     cpu.cycles += 8;
 }
 
+// ANDC #xx:8,CCR
+// no interrupts inmediatly after this instruction should occur
+static void andc(uint8_t xx) {
+    cpu.ccr &= xx;
+    cpu.cycles += 2;
+}
+
 uint8_t cpu_fetch8() {
     uint8_t data = mem_read8(cpu.pc & 0xFFFF); // normal mode (16 bits)
     cpu.pc += 1;
@@ -2277,6 +2284,12 @@ void cpu_step() {
             uint8_t second_byte = cpu_fetch8(); // it should be 0
             nop();
             printf("NOP\n");
+            break;
+        }
+        case 0x06: { // ANDC #xx:8, CCR
+            uint8_t imm = cpu_fetch8();
+            andc(imm);
+            printf("ANDC #xx:8, CCR\n");
             break;
         }
         case 0x59: { // JMP @ERn

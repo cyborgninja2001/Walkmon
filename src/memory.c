@@ -71,7 +71,7 @@ uint32_t mem_read32(uint32_t address) {
     if (!(address % 2 == 0)) { // it's an odd address **
         //address &= ~1;
         printf("*ERROR: ODD ADDRESS!* mem_read32(%08X)\n", address);
-        //exit(-1);
+        exit(-1);
     }
     uint16_t hi = mem_read16(address);
     uint16_t lo = mem_read16(address + 2);
@@ -112,7 +112,7 @@ void mem_write16(uint32_t address, uint16_t value) {
     if (!(address % 2 == 0)) { // it's an odd address
         //address &= ~1;
         printf("*ERROR: ODD ADDRESS!* mem_write16(%08X)\n", address);
-        //exit(-1);
+        exit(-1);
     }
 
     mem_write8(address, value >> 8);       // hi
@@ -129,7 +129,7 @@ void mem_write32(uint32_t address, uint32_t value) {
     if (!(address % 2 == 0)) { // it's an odd address
         //address &= ~1;
         printf("*ERROR: ODD ADDRESS!* mem_write32(%08X)\n", address);
-        //exit(-1);
+        exit(-1);
     }
 
     mem_write16(address, value >> 16);        // hi
