@@ -93,6 +93,7 @@ void cpu_reset() {
     uint32_t vector =  mem_read16(0x0000); // hi
     //vector |= mem_read16(0x0002);                 // lo
     cpu.pc = vector;                   // 0x02C4
+    //cpu.cycles += 2;
 
     // just in case
     if (cpu.pc == 0xFFFFFF || cpu.pc == 0x000000) {
