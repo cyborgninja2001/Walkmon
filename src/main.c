@@ -4,6 +4,7 @@
 #include "eeprom.h"
 #include "memory.h"
 #include "exceptions.h"
+#include "ssu.h"
 
 int main(int argc, char *argv[]) {
     bool loaded_rom = load_rom(argv[1]);
@@ -41,9 +42,12 @@ int main(int argc, char *argv[]) {
     //mem_write8(IENR1, 0xFF);
     extern CPU cpu;
     //mem_write8(0xF0E4, 0xFF);
+    ssu_init();
     while (true) {
         // why er7 (sp) is odd???? i think it shouldn't
         //if ((cpu.er[0x7] % 2) != 0) { exit(-1); }
+        //if ((cpu.er[0x7] % 2) != 0) cpu.er[0x7] &= ~1;
+        if ((cpu.pc % 2) != 0) { exit(-1); }
         //mem_write8(0xF0E4, 0xFF);
         cpu_step();
         check_exceptions();

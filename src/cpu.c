@@ -1233,7 +1233,7 @@ static void jsr_aa8(uint8_t aa) {
     mem_write16(sp_address, value);
 
     uint16_t address = mem_read16(aa);
-    if (!((address % 2) == 0)) address &= ~1; // **CHECK**
+    if (!((address % 2) == 0)) { address &= ~1; exit(-1); } // **CHECK**
     cpu.pc = address;
     cpu.cycles += 8;
 }
@@ -2276,7 +2276,6 @@ uint16_t cpu_fetch16() {
 
 void cpu_step() {
     uint8_t opcode = cpu_fetch8();
-    if ((cpu.pc % 2) == 0) { exit(-1); }
     printf("OPCODE: %02X\n", opcode);
 
     switch (opcode) {
@@ -3045,6 +3044,8 @@ void cpu_step() {
             uint8_t fourth_byte = cpu_fetch8();
             uint8_t fifth_byte = cpu_fetch8(); // it only has 0's
 
+            if (fifth_byte != 0x00) { printf("*ERROR DECODE MOV.W\n*"); exit(-1); }
+
             switch (third_byte) {
                 case 0x6A: {
                     //disp
@@ -3210,7 +3211,7 @@ void cpu_step() {
                     printf("MOV.W #xx:16, Rd\n");
                     break;
                 }
-                case  0x10: { // ADD.W #xx:16, Rd
+                case 0x10: { // ADD.W #xx:16, Rd
                     uint8_t third_byte = cpu_fetch8();
                     uint8_t fourth_byte = cpu_fetch8();
                     uint16_t imm = (third_byte << 8) | fourth_byte;
@@ -3454,6 +3455,8 @@ void cpu_step() {
                     uint8_t eigth_byte = cpu_fetch8();
                     uint8_t nineth_byte = cpu_fetch8();
                     uint8_t tenth_byte = cpu_fetch8();
+
+                    if (fifth_byte != 0x6B) { printf("*ERROR DECODE MOV.L\n*"); exit(-1); }
 
                     uint32_t disp = (eigth_byte << 16) | (nineth_byte << 8) | tenth_byte;
                     switch (sixth_byte & 0xF0) {
