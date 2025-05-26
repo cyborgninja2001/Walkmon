@@ -3156,6 +3156,9 @@ void cpu_step() {
                     uint16_t abs = (third_byte << 8) | fourth_byte;
                     mov_b_aa16_rd(abs, second_byte & 0x0F);
                     printf("MOV.B @aa:16, Rd\n");
+                    printf("@aa:16 = 0x%04X\n", abs);
+                    printf("reg: %02X\n", second_byte & 0x0F);
+                    printf("mem(0x%04X) = %02X\n", abs, mem_read8(abs));
                     break;
                 }
                 case 0x20: { // MOV.B @aa:24, Rd
