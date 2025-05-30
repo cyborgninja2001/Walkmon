@@ -1,4 +1,4 @@
-gcc src/main.c src/cpu.c src/memory.c src/eeprom.c src/exceptions.c src/queue.c src/ssu.c src/clock.c src/rtc.c src/io.c -o main
+gcc src/main.c src/cpu.c src/memory.c src/eeprom.c src/exceptions.c src/queue.c src/ssu.c src/clock.c src/rtc.c src/io.c src/timer_b1.c -o main
 
 *RUN*
 ./main ../../project_resources/rom.bin ../../project_resources/eeprom.bin
