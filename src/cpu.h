@@ -106,4 +106,12 @@ uint16_t cpu_fetch16();
 void cpu_step();        // fetch, decode & execute
 void cpu_debug();
 
+// registers related to power-down modes
+#define SYSCR1 0xFFF0  // system control register 1
+#define SYSCR2 0xFFF1  // system control register 2
+#define CKSTPR1 0xFFFA // clock halt register 1
+#define CKSTPR2 0xFFFB // clock halt register 2
+
+void init_power_down_registers();
+
 #endif

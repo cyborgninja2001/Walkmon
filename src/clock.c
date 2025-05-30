@@ -4,7 +4,6 @@ extern CPU cpu;
 
 void osccr_init() {
     mem_write8(OSCCR, 0); // OSCF bit depends on the value of E7_2 Pin
-    cpu.cycles += 2;
 }
 
 uint8_t get_osccr() {

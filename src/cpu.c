@@ -115,6 +115,13 @@ void cpu_reset() {
     cpu.halted = false;
 }
 
+void init_power_down_registers() {
+    mem_write8(SYSCR1, 0x03);
+    mem_write8(SYSCR2, 0xF0);
+    mem_write8(CKSTPR1, 0x03);
+    mem_write8(CKSTPR2, 0x04);
+}
+
 // *INSTRUCTIONS*
 static void nop() {
     // it does nothing

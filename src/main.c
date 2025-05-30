@@ -5,6 +5,7 @@
 #include "memory.h"
 #include "exceptions.h"
 #include "ssu.h"
+#include "clock.h"
 
 int main(int argc, char *argv[]) {
     bool loaded_rom = load_rom(argv[1]);
@@ -42,6 +43,9 @@ int main(int argc, char *argv[]) {
     //mem_write8(IENR1, 0xFF);
     extern CPU cpu;
     ssu_init();
+    init_memory();
+    init_power_down_registers();
+    osccr_init();
     //mem_write8(0xF0E4, mem_read8(0xF0E4) | 0b00000100);
     while (true) {
         // why er7 (sp) is odd???? i think it shouldn't
