@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "memory.h"
+#include "ssu.h"
 
 /*
 erX (32 bits) can be splitted into eX (hi 16 bits) & rX (lo 16 bits)

@@ -1,6 +1,7 @@
 #include "ssu.h"
 
 extern CPU cpu;
+static uint8_t SSTRSR; // shift register (cannot be directly accesed by cpu)
 
 void ssu_init() {
     mem_write8(SSCRH, 0x08);
