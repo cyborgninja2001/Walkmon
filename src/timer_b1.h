@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "memory.h"
+#include "exceptions.h"
 
 // registers
 #define TMB1 0xF0D0
@@ -18,5 +19,6 @@
 #define TMB10 ((mem_read8(TMB1) >> 0) & 1)
 
 void init_timer_b1();
+void update_timer_b1();
 
 #endif
